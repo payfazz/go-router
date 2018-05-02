@@ -20,7 +20,7 @@ func main() {
 		"lala": segment.Compile(nil,
 			segment.Compile(segment.H{
 				"hai": func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprintf(w, "(3) ALL /lala/%s/hai\n", segment.GetSegment(r, -1))
+					fmt.Fprintf(w, "(3) ALL /lala/%s/hai\n", segment.GetRelative(r, -1))
 				},
 			}, method.Compile(method.H{
 				http.MethodPost: func(w http.ResponseWriter, r *http.Request) {
@@ -31,8 +31,19 @@ func main() {
 				},
 			}, nil)),
 		),
+		"asdf": segment.Compile(segment.H{
+			"haha": func(w http.ResponseWriter, r *http.Request) {
+				done, rest := segment.Split(r)
+				fmt.Fprintf(w, "(6) ALL /%s/%s\n", segment.GetRelative(r, -1), segment.Get(r))
+				fmt.Fprintf(w, "%s\n", done)
+				fmt.Fprintf(w, "%s\n", rest)
+			},
+		}, nil),
 	}, func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "(6) ALL /%s %s\n", segment.Get(r), segment.Rest(r))
+		done, rest := segment.Split(r)
+		fmt.Fprintf(w, "(7) ALL /%s\n", segment.Get(r))
+		fmt.Fprintf(w, "%s\n", done)
+		fmt.Fprintf(w, "%s\n", rest)
 	})
 
 	/*

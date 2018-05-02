@@ -48,7 +48,7 @@ func Cur(r *http.Request) int {
 
 // Get return current segment in path
 func Get(r *http.Request) string {
-	return GetSegment(r, 0)
+	return GetRelative(r, 0)
 }
 
 // GetEnd same as Get but also indicate the end segment of path
@@ -57,18 +57,20 @@ func GetEnd(r *http.Request) (string, bool) {
 	return s.get(s.next - 1), s.next == len(s.list)
 }
 
-// GetSegment return segment in path, relative to current index
-func GetSegment(r *http.Request, d int) string {
+// GetRelative return segment in path, relative to current index
+func GetRelative(r *http.Request, d int) string {
 	s := r.Context().Value(key).(*state)
 	return s.get(s.next - 1 + d)
 }
 
-// Rest segment in the path
-func Rest(r *http.Request) []string {
+// Split return processed and rest of segments in path
+func Split(r *http.Request) ([]string, []string) {
 	s := r.Context().Value(key).(*state)
-	ret := make([]string, len(s.list)-s.next)
-	copy(ret, s.list[s.next:])
-	return ret
+	done := make([]string, s.next)
+	rest := make([]string, len(s.list)-s.next)
+	copy(done, s.list[:s.next])
+	copy(rest, s.list[s.next:])
+	return done, rest
 }
 
 func getState(r *http.Request) (*state, *http.Request) {
