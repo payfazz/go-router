@@ -7,6 +7,7 @@ Internally it compiled into tree structure (nested `map[string]interface{}`), se
 ## TODO
 
 * More documentation and example
+* Implement host based routing
 * Implement path based routing with segment based routing as building block. Segment based block is pretty hard to use, see `examples/2_segment_and_method`. Path based routing will look like:
     ```go
     r := path.Compile(path.H{
