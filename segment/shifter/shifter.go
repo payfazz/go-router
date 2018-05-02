@@ -16,7 +16,11 @@ type Shifter struct {
 	next int
 }
 
-func From(r *http.Request, key interface{}) (*Shifter, *http.Request) {
+func From(r *http.Request) (*Shifter, *http.Request) {
+	return With(r, nil, nil)
+}
+
+func With(r *http.Request, key interface{}, list []string) (*Shifter, *http.Request) {
 	if key == nil {
 		key = defCtxKey
 	}
@@ -25,11 +29,13 @@ func From(r *http.Request, key interface{}) (*Shifter, *http.Request) {
 		return tmp.(*Shifter), r
 	}
 
-	s := &Shifter{
-		make(map[string]int),
-		strings.Split(
+	if list == nil {
+		list = strings.Split(
 			strings.TrimPrefix(r.URL.EscapedPath(), "/"), "/",
-		), 0}
+		)
+	}
+
+	s := &Shifter{make(map[string]int), list, 0}
 
 	r = r.WithContext(context.WithValue(
 		r.Context(), key, s,

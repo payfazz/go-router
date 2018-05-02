@@ -26,7 +26,7 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var next http.HandlerFunc
-		s, r := shifter.From(r, ctxKey)
+		s, r := shifter.With(r, ctxKey, nil)
 		seg, _ := s.Shift()
 		next, ok := h[seg]
 		if !ok {
@@ -39,7 +39,7 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.From(r, ctxKey)
+		s, r := shifter.With(r, ctxKey, nil)
 		if !s.End() {
 			s.Shift()
 			s.Tag(tag)
@@ -50,7 +50,7 @@ func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.From(r, ctxKey)
+		s, r := shifter.With(r, ctxKey, nil)
 		_, rest := s.Split()
 		r.URL.Path = "/" + strings.Join(rest, "/")
 		r.URL.RawPath = ""
@@ -59,12 +59,12 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func Get(r *http.Request, tag string) (string, bool) {
-	s, _ := shifter.From(r, ctxKey)
+	s, _ := shifter.With(r, ctxKey, nil)
 	return s.GetByTag(tag)
 }
 
 func Rest(r *http.Request) []string {
-	s, _ := shifter.From(r, ctxKey)
+	s, _ := shifter.With(r, ctxKey, nil)
 	_, rest := s.Split()
 	return rest
 }
