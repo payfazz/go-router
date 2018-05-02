@@ -63,16 +63,6 @@ func Get(r *http.Request, tag string) (string, bool) {
 	return s.GetByTag(tag)
 }
 
-func Current(r *http.Request) string {
-	s, _ := shifter.From(r, ctxKey)
-	return s.GetRelative(0)
-}
-
-func End(r *http.Request) bool {
-	s, _ := shifter.From(r, ctxKey)
-	return s.End()
-}
-
 func Rest(r *http.Request) []string {
 	s, _ := shifter.From(r, ctxKey)
 	_, rest := s.Split()

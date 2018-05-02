@@ -60,11 +60,11 @@ func main() {
 	}, method.Compile(method.H{
 		http.MethodGet: func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(10) GET *default")
-			fmt.Fprintf(w, "%#v %#v %#v\n", segment.Current(r), segment.End(r), segment.Rest(r))
+			fmt.Fprintf(w, "%#v\n", segment.Rest(r))
 		},
 		http.MethodPost: func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(11) POST *default")
-			fmt.Fprintf(w, "%#v %#v %#v\n", segment.Current(r), segment.End(r), segment.Rest(r))
+			fmt.Fprintf(w, "%#v\n", segment.Rest(r))
 		},
 	}, nil))))
 }
