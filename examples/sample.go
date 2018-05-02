@@ -20,7 +20,7 @@ func main() {
 		"lala": segment.Compile(nil,
 			segment.Compile(segment.H{
 				"hai": func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprintf(w, "(3) ALL /lala/%s/hai\n", segment.GetN(r, -1))
+					fmt.Fprintf(w, "(3) ALL /lala/%s/hai\n", segment.GetSegment(r, -1))
 				},
 			}, method.Compile(method.H{
 				http.MethodPost: func(w http.ResponseWriter, r *http.Request) {
