@@ -9,9 +9,9 @@ import (
 	"github.com/payfazz/go-router/segment/shifter"
 )
 
-type keyT struct{}
+type ctxType struct{}
 
-var key keyT
+var ctxKey ctxType
 
 // H is type for mapping segment and its handler
 type H map[string]http.HandlerFunc
@@ -26,7 +26,7 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var next http.HandlerFunc
-		s, r := shifter.From(r, key)
+		s, r := shifter.From(r, ctxKey)
 		seg, _ := s.Shift()
 		next, ok := h[seg]
 		if !ok {
@@ -39,7 +39,7 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.From(r, key)
+		s, r := shifter.From(r, ctxKey)
 		if !s.End() {
 			s.Shift()
 			s.Tag(tag)
@@ -50,7 +50,7 @@ func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.From(r, key)
+		s, r := shifter.From(r, ctxKey)
 		_, rest := s.Split()
 		r.URL.Path = "/" + strings.Join(rest, "/")
 		r.URL.RawPath = ""
@@ -59,22 +59,22 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func Get(r *http.Request, tag string) (string, bool) {
-	s, _ := shifter.From(r, key)
+	s, _ := shifter.From(r, ctxKey)
 	return s.GetByTag(tag)
 }
 
 func Current(r *http.Request) string {
-	s, _ := shifter.From(r, key)
+	s, _ := shifter.From(r, ctxKey)
 	return s.GetRelative(0)
 }
 
 func End(r *http.Request) bool {
-	s, _ := shifter.From(r, key)
+	s, _ := shifter.From(r, ctxKey)
 	return s.End()
 }
 
 func Rest(r *http.Request) []string {
-	s, _ := shifter.From(r, key)
+	s, _ := shifter.From(r, ctxKey)
 	_, rest := s.Split()
 	return rest
 }

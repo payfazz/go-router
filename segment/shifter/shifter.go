@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-type keyT struct{}
+type ctxType struct{}
 
-var defKey keyT
+var defCtxKey ctxType
 
 type Shifter struct {
 	tag  map[string]int
@@ -18,7 +18,7 @@ type Shifter struct {
 
 func From(r *http.Request, key interface{}) (*Shifter, *http.Request) {
 	if key == nil {
-		key = defKey
+		key = defCtxKey
 	}
 
 	if tmp := r.Context().Value(key); tmp != nil {
