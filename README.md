@@ -2,17 +2,19 @@
 
 Fast golang router.
 
-Internally it compiled into tree structure (nested `map[string]interface{}`), see `examples/2_segment_and_method/main.go`.
+This project is about simple http router that preserve `http.Handler` and `http.HanderFunc` signature.
+
+Because every routing strategy (`path.Compile`, `method.Compile`, `segment.Compile`) will produce `http.HandlerFunc` (which is also `http.Handler`), it can be mix with another router (make sure to strip prefix when using `path`).
+
+If you like to manually control your routing (using `if` of `switch`), `segment/shifter` package may help you.
+
+It heavily use clousure and tail call, so it will be faster when tail-cail-optimization implemented on golang. The routing decission is precompute, so it should be faster.
+
+for usage see examples directory
+
+see also https://github.com/payfazz/go-middleware for middleware
 
 ## TODO
 
-* More documentation and example
+* More documentation and examples
 * Implement host based routing
-* Implement path based routing with segment based routing as building block. Segment based block is pretty hard to use, see `examples/2_segment_and_method`. Path based routing will look like:
-    ```go
-    r := path.Compile(path.H{
-        "/a/b": handler1,
-        "/asdf/:paramhere/asge": handler2,
-        "/asdf/:paramhere/:param2here/gege": handler3,
-    }, nil)
-    ```
