@@ -19,9 +19,15 @@ func Error(err string, code int) http.HandlerFunc {
 	}
 }
 
-func Redirect(url string, code int) http.HandlerFunc {
+func Redirect(url string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, url, code)
+		// rfc2616, only "HEAD" and "GET"
+		switch r.Method {
+		case http.MethodHead, http.MethodGet:
+			http.Redirect(w, r, url, http.StatusMovedPermanently)
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
 	}
 }
 
