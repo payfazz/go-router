@@ -10,7 +10,7 @@ import (
 // H is type for mapping method and its handler
 type H map[string]http.HandlerFunc
 
-// Compile into single http.Handler. if def is nil, it will use defhandler.StatusMethodNotAllowed
+// Compile into single http.HandlerFunc. If def is nil, it will use defhandler.StatusMethodNotAllowed
 func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if h == nil {
 		h = make(H)

@@ -37,6 +37,7 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Tag return helper that will tag current segment and process to next segment
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s, r := shifter.With(r, ctxKey, nil)
@@ -48,12 +49,14 @@ func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// End return helper that only will execute h when its position is last segment of the path
 func End(h http.HandlerFunc, def http.HandlerFunc) http.HandlerFunc {
 	return Compile(H{
 		"": h,
 	}, def)
 }
 
+// Stripper return helper for stripping processed segment from r.URL.Path
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s, r := shifter.With(r, ctxKey, nil)
@@ -64,11 +67,13 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Get return tagged segment
 func Get(r *http.Request, tag string) (string, bool) {
 	s, _ := shifter.With(r, ctxKey, nil)
 	return s.GetByTag(tag)
 }
 
+// Rest return rest of the segment
 func Rest(r *http.Request) []string {
 	s, _ := shifter.With(r, ctxKey, nil)
 	_, rest := s.Split()

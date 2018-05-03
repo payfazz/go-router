@@ -14,7 +14,9 @@ for usage see examples directory
 
 see also https://github.com/payfazz/go-middleware for middleware
 
+
 ## TODO
 
 * More documentation and examples
 * Implement host based routing
+* create testing. when i wrote this, this project was part of bigger project, all of the testing was done there.

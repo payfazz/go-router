@@ -13,12 +13,6 @@ var (
 	StatusUnprocessableEntity  = ResponseCode(http.StatusUnprocessableEntity)
 )
 
-func Error(err string, code int) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, err, code)
-	}
-}
-
 func Redirect(url string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// rfc2616, only "HEAD" and "GET"
