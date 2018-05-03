@@ -48,6 +48,12 @@ func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func End(h http.HandlerFunc, def http.HandlerFunc) http.HandlerFunc {
+	return Compile(H{
+		"": h,
+	}, def)
+}
+
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s, r := shifter.With(r, ctxKey, nil)
