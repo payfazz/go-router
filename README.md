@@ -1,5 +1,7 @@
 # go-router
 
+[![GoDoc](https://godoc.org/github.com/payfazz/go-router?status.svg)](https://godoc.org/github.com/payfazz/go-router)
+
 Fast golang router.
 
 This project is about simple http router that preserve `http.Handler` and `http.HanderFunc` signature.
