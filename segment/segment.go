@@ -37,6 +37,11 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// C same as Compile with def equal to nil
+func C(h H) http.HandlerFunc {
+	return Compile(h, nil)
+}
+
 // Tag return helper that will tag current segment and process to next segment
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,6 +59,11 @@ func End(h http.HandlerFunc, def http.HandlerFunc) http.HandlerFunc {
 	return Compile(H{
 		"": h,
 	}, def)
+}
+
+// E same as End with def equal to nil
+func E(h http.HandlerFunc) http.HandlerFunc {
+	return End(h, nil)
 }
 
 // Stripper return helper for stripping processed segment from r.URL.Path

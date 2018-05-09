@@ -26,3 +26,8 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 		next(w, r)
 	}
 }
+
+// C same as Compile with def equal to nil
+func C(h H) http.HandlerFunc {
+	return Compile(h, nil)
+}

@@ -16,7 +16,7 @@ func main() {
 		"test": func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(2) ALL /test | /test/**")
 		},
-		"test2": segment.Compile(segment.H{
+		"test2": segment.C(segment.H{
 			"": func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "(2) ALL /test2 | /test2/")
 			},
@@ -26,7 +26,7 @@ func main() {
 			"bb": func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "(4) ALL /test2/bb | /test2/bb/**")
 			},
-		}, nil),
+		}),
 		"lala": segment.Tag("mytag", func(w http.ResponseWriter, r *http.Request) {
 			s, ok := segment.Get(r, "mytag")
 			if ok {
@@ -35,7 +35,7 @@ func main() {
 				fmt.Fprintln(w, "(5) ALL /lala")
 			}
 		}),
-		"lala2": segment.Tag("mytag", segment.Compile(segment.H{
+		"lala2": segment.Tag("mytag", segment.C(segment.H{
 			"": func(w http.ResponseWriter, r *http.Request) {
 				s, ok := segment.Get(r, "mytag")
 				if ok {
@@ -52,12 +52,12 @@ func main() {
 				s, _ := segment.Get(r, "mytag")
 				fmt.Fprintf(w, "(8) ALL /test2/%v/bb | /test2/%v/bb/**\n", s, s)
 			},
-		}, nil)),
+		})),
 		"lala3": segment.Stripper(func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(9) ALL /lala3 | /lala3/**")
 			fmt.Fprintf(w, "New URL = %v\n", r.URL.String())
 		}),
-	}, method.Compile(method.H{
+	}, method.C(method.H{
 		http.MethodGet: func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(10) GET *default")
 			fmt.Fprintf(w, "%#v\n", segment.Rest(r))
@@ -66,5 +66,5 @@ func main() {
 			fmt.Fprintln(w, "(11) POST *default")
 			fmt.Fprintf(w, "%#v\n", segment.Rest(r))
 		},
-	}, nil))))
+	}))))
 }
