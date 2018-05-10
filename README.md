@@ -10,7 +10,7 @@ Because every routing strategy (`path.Compile`, `method.Compile`, `segment.Compi
 
 If you like to manually control your routing (using `if` of `switch`), `segment/shifter` package may help you.
 
-It heavily use clousure and tail call, so it will be faster when tail-cail-optimization implemented on golang. The routing decission is precompute, so it should be faster.
+It heavily use clousure and tail call, so it will be faster when tail-cail-optimization implemented on golang. The routing decission tree is precompute, so it should be faster.
 
 for usage see examples directory
 
