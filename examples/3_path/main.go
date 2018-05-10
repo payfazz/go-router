@@ -22,11 +22,14 @@ func main() {
 		"/lala/:key": gen("4"),
 		"/lala/:key/aa": func(w http.ResponseWriter, r *http.Request) {
 			key, _ := segment.Get(r, "key")
+			fmt.Fprintln(w, "5")
 			fmt.Fprintln(w, key)
 		},
 	}, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "MY NOT FOUND HANDLER")
+		done, rest := segment.Split(r)
+		fmt.Fprintln(w, done, rest)
 	})))
 
 }

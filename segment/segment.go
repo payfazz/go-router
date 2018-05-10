@@ -85,7 +85,12 @@ func Get(r *http.Request, tag string) (string, bool) {
 
 // Rest return rest of the segment
 func Rest(r *http.Request) []string {
-	s, _ := shifter.With(r, ctxKey, nil)
-	_, rest := s.Split()
+	_, rest := Split(r)
 	return rest
+}
+
+// Split return processed and the rest of the segments
+func Split(r *http.Request) ([]string, []string) {
+	s, _ := shifter.With(r, ctxKey, nil)
+	return s.Split()
 }
