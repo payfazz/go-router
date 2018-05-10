@@ -16,6 +16,7 @@ for usage see examples directory
 
 see also https://github.com/payfazz/go-middleware for middleware
 
+see also https://gist.github.com/win-t/8a243301bd227cca6135374cf94d9e98 for example usage of go-middleware and go-router
 
 ## TODO
 
