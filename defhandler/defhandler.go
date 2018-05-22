@@ -1,17 +1,24 @@
 // Package defhandler provide default handler construction
 package defhandler
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 var (
-	StatusBadRequest           = ResponseCode(http.StatusBadRequest)
-	StatusUnauthorized         = ResponseCode(http.StatusUnauthorized)
-	StatusForbidden            = ResponseCode(http.StatusForbidden)
-	StatusNotFound             = ResponseCode(http.StatusNotFound)
-	StatusMethodNotAllowed     = ResponseCode(http.StatusMethodNotAllowed)
-	StatusUnsupportedMediaType = ResponseCode(http.StatusUnsupportedMediaType)
-	StatusUnprocessableEntity  = ResponseCode(http.StatusUnprocessableEntity)
+	StatusBadRequest           = genDefHandler(http.StatusBadRequest)
+	StatusUnauthorized         = genDefHandler(http.StatusUnauthorized)
+	StatusForbidden            = genDefHandler(http.StatusForbidden)
+	StatusNotFound             = genDefHandler(http.StatusNotFound)
+	StatusMethodNotAllowed     = genDefHandler(http.StatusMethodNotAllowed)
+	StatusUnsupportedMediaType = genDefHandler(http.StatusUnsupportedMediaType)
+	StatusUnprocessableEntity  = genDefHandler(http.StatusUnprocessableEntity)
 )
+
+func genDefHandler(code int) http.HandlerFunc {
+	return ResponseCodeWithMessage(code, fmt.Sprintf("%d %s", code, http.StatusText(code)))
+}
 
 func Redirect(url string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +33,12 @@ func Redirect(url string) http.HandlerFunc {
 }
 
 func ResponseCode(code int) http.HandlerFunc {
+	return ResponseCodeWithMessage(code, "")
+}
+
+func ResponseCodeWithMessage(code int, message string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)
+		fmt.Fprint(w, message)
 	}
 }
