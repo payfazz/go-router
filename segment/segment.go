@@ -3,6 +3,7 @@ package segment
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/payfazz/go-router/defhandler"
@@ -71,9 +72,15 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s, r := shifter.With(r, ctxKey, nil)
 		_, rest := s.Split()
-		r.URL.Path = "/" + strings.Join(rest, "/")
-		r.URL.RawPath = ""
-		next(w, r)
+
+		r2 := new(http.Request)
+		*r2 = *r
+		r2.URL = new(url.URL)
+		*r2.URL = *r.URL
+		r2.URL.Path = "/" + strings.Join(rest, "/")
+		r2.URL.RawPath = ""
+
+		next(w, r2)
 	}
 }
 
