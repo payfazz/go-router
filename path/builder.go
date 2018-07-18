@@ -81,17 +81,17 @@ func compile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
 		return http.HandlerFunc(root)
 	case tree:
 		hMap := make(segmentpkg.H)
-		var hParam http.HandlerFunc
+		var paramHandler http.HandlerFunc
 		var paramTag string
 		for key, item := range root {
 			switch key := key.(type) {
 			case segment:
 				hMap[string(key)] = compile(item, def)
 			case param:
-				switch hParam {
+				switch paramHandler {
 				case nil:
 					paramTag = string(key)
-					hParam = segmentpkg.Tag(paramTag, compile(item, def))
+					paramHandler = segmentpkg.Tag(paramTag, compile(item, def))
 				default:
 					if paramTag != string(key) {
 						panic(fmt.Sprintf("path: multiple param name, :%s != :%s", paramTag, string(key)))
@@ -102,10 +102,10 @@ func compile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
 			}
 
 		}
-		if hParam == nil {
-			hParam = def
+		if paramHandler == nil {
+			paramHandler = def
 		}
-		return segmentpkg.Compile(hMap, hParam)
+		return segmentpkg.Compile(hMap, paramHandler)
 	default:
 		panic("path: (BUG) invalid tree")
 	}
