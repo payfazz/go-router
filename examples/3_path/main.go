@@ -25,6 +25,8 @@ func main() {
 			fmt.Fprintln(w, "5")
 			fmt.Fprintln(w, key)
 		},
+		"/test-slash":   path.WithTrailingSlash(gen("aa")),
+		"/test-slash-2": path.WithoutTrailingSlash(gen("bb")),
 	}, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "MY NOT FOUND HANDLER")
