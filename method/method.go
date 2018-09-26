@@ -18,6 +18,11 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusMethodNotAllowed
 	}
+	for _, v := range h {
+		if v == nil {
+			panic("method: handler cannot be nil")
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		next, ok := h[r.Method]
 		if !ok {
