@@ -27,6 +27,9 @@ var (
 
 	// StatusUnprocessableEntity is http.HandlerFunc that always send HTTP status UnprocessableEntity
 	StatusUnprocessableEntity = genDefHandler(http.StatusUnprocessableEntity)
+
+	// StatusNotImplemented is http.HandlerFunc that always send HTTP status NotImplemented
+	StatusNotImplemented = genDefHandler(http.StatusNotImplemented)
 )
 
 func genDefHandler(code int) http.HandlerFunc {
