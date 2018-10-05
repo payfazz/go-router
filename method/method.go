@@ -18,9 +18,9 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusMethodNotAllowed
 	}
-	for _, v := range h {
+	for k, v := range h {
 		if v == nil {
-			panic("method: handler cannot be nil")
+			h[k] = defhandler.StatusNotImplemented
 		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {

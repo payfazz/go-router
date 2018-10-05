@@ -25,9 +25,9 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusNotFound
 	}
-	for _, v := range h {
+	for k, v := range h {
 		if v == nil {
-			panic("segment: handler cannot be nil")
+			h[k] = defhandler.StatusNotImplemented
 		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
