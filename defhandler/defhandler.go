@@ -8,33 +8,29 @@ import (
 
 var (
 	// StatusBadRequest is http.HandlerFunc that always send HTTP status BadRequest
-	StatusBadRequest = genDefHandler(http.StatusBadRequest)
+	StatusBadRequest = ResponseCode(http.StatusBadRequest)
 
 	// StatusUnauthorized is http.HandlerFunc that always send HTTP status Unauthorized
-	StatusUnauthorized = genDefHandler(http.StatusUnauthorized)
+	StatusUnauthorized = ResponseCode(http.StatusUnauthorized)
 
 	// StatusForbidden is http.HandlerFunc that always send HTTP status Forbidden
-	StatusForbidden = genDefHandler(http.StatusForbidden)
+	StatusForbidden = ResponseCode(http.StatusForbidden)
 
 	// StatusNotFound is http.HandlerFunc that always send HTTP status NotFound
-	StatusNotFound = genDefHandler(http.StatusNotFound)
+	StatusNotFound = ResponseCode(http.StatusNotFound)
 
 	// StatusMethodNotAllowed is http.HandlerFunc that always send HTTP status MethodNotAllowed
-	StatusMethodNotAllowed = genDefHandler(http.StatusMethodNotAllowed)
+	StatusMethodNotAllowed = ResponseCode(http.StatusMethodNotAllowed)
 
 	// StatusUnsupportedMediaType is http.HandlerFunc that always send HTTP status UnsupportedMediaType
-	StatusUnsupportedMediaType = genDefHandler(http.StatusUnsupportedMediaType)
+	StatusUnsupportedMediaType = ResponseCode(http.StatusUnsupportedMediaType)
 
 	// StatusUnprocessableEntity is http.HandlerFunc that always send HTTP status UnprocessableEntity
-	StatusUnprocessableEntity = genDefHandler(http.StatusUnprocessableEntity)
+	StatusUnprocessableEntity = ResponseCode(http.StatusUnprocessableEntity)
 
 	// StatusNotImplemented is http.HandlerFunc that always send HTTP status NotImplemented
-	StatusNotImplemented = genDefHandler(http.StatusNotImplemented)
+	StatusNotImplemented = ResponseCode(http.StatusNotImplemented)
 )
-
-func genDefHandler(code int) http.HandlerFunc {
-	return ResponseCodeWithMessage(code, fmt.Sprintf("%d %s", code, http.StatusText(code)))
-}
 
 // Redirect return http.HandlerFunc that always redirect to url
 func Redirect(url string) http.HandlerFunc {
@@ -52,7 +48,7 @@ func Redirect(url string) http.HandlerFunc {
 // ResponseCode return http.HandlerFunc that always send empty HTTP response with
 // defined status code
 func ResponseCode(code int) http.HandlerFunc {
-	return ResponseCodeWithMessage(code, "")
+	return ResponseCodeWithMessage(code, fmt.Sprintf("%d %s", code, http.StatusText(code)))
 }
 
 // ResponseCodeWithMessage return http.HandlerFunc that always send HTTP response
@@ -60,7 +56,7 @@ func ResponseCode(code int) http.HandlerFunc {
 func ResponseCodeWithMessage(code int, message string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if message != "" {
-			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		}
 		w.WriteHeader(code)
 		if message != "" {
