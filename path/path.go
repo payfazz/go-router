@@ -50,7 +50,7 @@ func WithTrailingSlash(next http.HandlerFunc) http.HandlerFunc {
 func WithoutTrailingSlash(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.EscapedPath()
-		if strings.HasSuffix(path, "/") {
+		if path != "/" && strings.HasSuffix(path, "/") {
 			// rfc2616, only "HEAD" and "GET"
 			switch r.Method {
 			case http.MethodHead, http.MethodGet:
