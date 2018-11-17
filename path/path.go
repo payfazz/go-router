@@ -10,6 +10,9 @@ import (
 //
 // parameterized segment of path can be prefixed with ":", example:
 //	/info/:userid/name
+//
+// NOTE: handler registered here is compared by prefix path match,
+// so request like /a/b/c/d/e will be still handled by /a/b.
 type H map[string]http.HandlerFunc
 
 // Compile into single http.Handler. if notfoundHandler is nil, it will use defhandler.StatusNotFound

@@ -71,13 +71,21 @@ func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 }
 
 // End return helper that only will execute h when its position is last segment of the path
-func End(h http.HandlerFunc, def http.HandlerFunc) http.HandlerFunc {
-	return Compile(H{
-		"": h,
-	}, def)
+// if otherwise is nil, defhandler.StatusNotFound is used
+func End(h http.HandlerFunc, otherwise http.HandlerFunc) http.HandlerFunc {
+	return EndOr(otherwise)(h)
 }
 
-// E same as End with def equal to nil
+// EndOr same as End, but return middleware
+func EndOr(otherwise http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
+	return func(h http.HandlerFunc) http.HandlerFunc {
+		return Compile(H{
+			"": h,
+		}, otherwise)
+	}
+}
+
+// E same as End with otherwise equal to nil
 func E(h http.HandlerFunc) http.HandlerFunc {
 	return End(h, nil)
 }
