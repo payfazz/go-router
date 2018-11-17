@@ -15,7 +15,7 @@ func main() {
 		}
 	}
 
-	panic(http.ListenAndServe(":8080", path.Compile(path.H{
+	panic(http.ListenAndServe(":8080", path.H{
 		"/":          gen("1"),
 		"/:key":      gen("2"),
 		"/asdf/":     gen("3"),
@@ -27,7 +27,7 @@ func main() {
 		},
 		"/test-slash":   path.WithTrailingSlash(gen("aa")),
 		"/test-slash-2": path.WithoutTrailingSlash(gen("bb")),
-	}, func(w http.ResponseWriter, r *http.Request) {
+	}.Compile(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "MY NOT FOUND HANDLER")
 		done, rest := segment.Split(r)

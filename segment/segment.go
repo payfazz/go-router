@@ -48,6 +48,16 @@ func C(h H) http.HandlerFunc {
 	return Compile(h, nil)
 }
 
+// Compile into single http.HandlerFunc
+func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
+	return Compile(h, def)
+}
+
+// C same as Compile with def equal to nil
+func (h H) C() http.HandlerFunc {
+	return C(h)
+}
+
 // Tag return helper that will tag current segment and process to next segment
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

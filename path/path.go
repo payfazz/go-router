@@ -29,6 +29,16 @@ func C(h H) http.HandlerFunc {
 	return Compile(h, nil)
 }
 
+// Compile into single http.HandlerFunc
+func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
+	return Compile(h, def)
+}
+
+// C same as Compile with def equal to nil
+func (h H) C() http.HandlerFunc {
+	return C(h)
+}
+
 // WithTrailingSlash return helper for redirect request to url that with trailing slash
 func WithTrailingSlash(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

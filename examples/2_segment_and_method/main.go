@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	panic(http.ListenAndServe(":8080", segment.Compile(segment.H{
+	panic(http.ListenAndServe(":8080", segment.H{
 		"": func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(1) ALL /")
 		},
@@ -57,7 +57,7 @@ func main() {
 			fmt.Fprintln(w, "(9) ALL /lala3 | /lala3/**")
 			fmt.Fprintf(w, "New URL = %v\n", r.URL.String())
 		}),
-	}, method.C(method.H{
+	}.Compile(method.H{
 		http.MethodGet: func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "(10) GET *default")
 			fmt.Fprintf(w, "%#v\n", segment.Rest(r))
@@ -66,5 +66,5 @@ func main() {
 			fmt.Fprintln(w, "(11) POST *default")
 			fmt.Fprintf(w, "%#v\n", segment.Rest(r))
 		},
-	}))))
+	}.C())))
 }
