@@ -100,7 +100,6 @@ func compile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
 			default:
 				panic("path: (BUG) invalid tree")
 			}
-
 		}
 		if paramHandler == nil {
 			paramHandler = def
