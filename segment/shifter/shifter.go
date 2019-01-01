@@ -24,7 +24,7 @@ func From(r *http.Request) (*Shifter, *http.Request) {
 	return With(r, nil, nil)
 }
 
-// With create Shifter.
+// With create Shifter if this request doesn't have Shifter with the key yet, otherwise return that shifter.
 // It modify the context value, so old http.Request should not be used
 //
 // key is needed when there are multiple instance of shifter attached to current context.
@@ -37,6 +37,15 @@ func With(r *http.Request, key interface{}, list []string) (*Shifter, *http.Requ
 
 	if tmp := r.Context().Value(key); tmp != nil {
 		return tmp.(*Shifter), r
+	}
+
+	return Reset(r, key, list)
+}
+
+// Reset same with With, except it always create new Shifter
+func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Request) {
+	if key == nil {
+		key = defCtxKey
 	}
 
 	if list == nil {
@@ -52,6 +61,15 @@ func With(r *http.Request, key interface{}, list []string) (*Shifter, *http.Requ
 	))
 
 	return s, r
+}
+
+// Reset the shifter, if list is nil then list is not modified
+func (s *Shifter) Reset(list []string) {
+	s.tag = make(map[string]int)
+	if list != nil {
+		s.list = list
+	}
+	s.next = 0
 }
 
 // Shift to next segment, also telling if already in last segment
