@@ -32,7 +32,7 @@ var (
 	StatusNotImplemented = ResponseCode(http.StatusNotImplemented)
 
 	// StatusInternalServerError is http.HandlerFunc that always send HTTP status InternalServerError
-	StatusInternalServerError = ResponseCode(http.StatusNotImplemented)
+	StatusInternalServerError = ResponseCode(http.StatusInternalServerError)
 )
 
 // Redirect return http.HandlerFunc that always redirect to url
