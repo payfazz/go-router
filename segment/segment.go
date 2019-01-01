@@ -103,6 +103,7 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 		r2.URL.Path = "/" + strings.Join(rest, "/")
 		r2.URL.RawPath = ""
 
+		s, r2 = shifter.Reset(r2, ctxKey, nil)
 		next(w, r2)
 	}
 }
