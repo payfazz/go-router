@@ -2,6 +2,7 @@
 package segment
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -117,6 +118,15 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 func Get(r *http.Request, tag string) (string, bool) {
 	s, _ := shifter.With(r, ctxKey, nil)
 	return s.GetByTag(tag)
+}
+
+// Param do the same thing as Get, but panic when tag is not found in the segment
+func Param(r *http.Request, tag string) string {
+	s, ok := Get(r, tag)
+	if !ok {
+		panic(fmt.Sprintf("segment: param %s not found in the segment", tag))
+	}
+	return s
 }
 
 // Rest return rest of the segment
