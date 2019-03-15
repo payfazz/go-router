@@ -85,8 +85,13 @@ func EndOr(otherwise http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// E same as End with otherwise equal to nil
+// E is *DEPREDECATED*, use MustEnd
 func E(h http.HandlerFunc) http.HandlerFunc {
+	return End(h, nil)
+}
+
+// MustEnd same as End with otherwise equal to nil.
+func MustEnd(h http.HandlerFunc) http.HandlerFunc {
 	return End(h, nil)
 }
 
@@ -101,7 +106,7 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 		r2.URL = new(url.URL)
 		*r2.URL = *r.URL
 		r2.URL.Path = "/" + strings.Join(rest, "/")
-		r2.URL.RawPath = ""
+		r2.URL.RawPath = r2.URL.Path
 
 		s, r2 = shifter.Reset(r2, ctxKey, nil)
 		next(w, r2)

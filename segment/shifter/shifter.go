@@ -74,12 +74,12 @@ func (s *Shifter) Reset(list []string) {
 
 // Shift to next segment, also telling if already in last segment
 func (s *Shifter) Shift() (string, bool) {
-	if s.next == len(s.list) {
+	if s.End() {
 		return "", true
 	}
 	ret := s.list[s.next]
 	s.next++
-	return ret, s.next == len(s.list)
+	return ret, s.End()
 }
 
 // Unshift do reverse of Shift

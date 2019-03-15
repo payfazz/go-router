@@ -71,3 +71,14 @@ func inArr(v string, xs []string) bool {
 	}
 	return false
 }
+
+// Must return middleware that only allowed in ms
+func Must(ms ...string) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		h := H{}
+		for _, m := range ms {
+			h[m] = next
+		}
+		return h.C()
+	}
+}
