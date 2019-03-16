@@ -10,13 +10,14 @@ import (
 // H is type for mapping host and its handler
 type H map[string]http.HandlerFunc
 
-// Compile into single http.HandlerFunc
-func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
-	if h == nil {
-		h = make(H)
-	}
+func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
-		def = defhandler.ResponseCodeWithMessage(http.StatusBadRequest, "Host not found")
+		def = defhandler.StatusBadRequest
+	}
+	for k, v := range h {
+		if v == nil {
+			h[k] = defhandler.StatusNotImplemented
+		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		next, ok := h[r.Host]
@@ -27,17 +28,23 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// C same as Compile with def equal to nil
-func C(h H) http.HandlerFunc {
-	return Compile(h, nil)
-}
-
-// Compile into single http.HandlerFunc
+// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusBadRequest
 func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return Compile(h, def)
+	return compile(h, def)
 }
 
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return C(h)
+	return compile(h, nil)
+}
+
+// Must return middleware that only allowed host that specified in hosts
+func Must(hosts ...string) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		h := H{}
+		for _, m := range hosts {
+			h[m] = next
+		}
+		return h.C()
+	}
 }

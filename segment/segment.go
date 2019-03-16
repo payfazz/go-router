@@ -2,7 +2,6 @@
 package segment
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,11 +17,7 @@ var ctxKey ctxType
 // H is type for mapping segment and its handler
 type H map[string]http.HandlerFunc
 
-// Compile into single http.Handler. if def is nil, it will use defhandler.StatusNotFound
-func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
-	if h == nil {
-		h = make(H)
-	}
+func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusNotFound
 	}
@@ -44,19 +39,14 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// C same as Compile with def equal to nil
-func C(h H) http.HandlerFunc {
-	return Compile(h, nil)
-}
-
-// Compile into single http.HandlerFunc
+// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusNotFound
 func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return Compile(h, def)
+	return compile(h, def)
 }
 
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return C(h)
+	return compile(h, nil)
 }
 
 // Tag return helper that will tag current segment and process to next segment
@@ -71,32 +61,22 @@ func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// End return helper that only will execute h when its position is last segment of the path
-// if otherwise is nil, defhandler.StatusNotFound is used
-func End(h http.HandlerFunc, otherwise http.HandlerFunc) http.HandlerFunc {
-	return EndOr(otherwise)(h)
-}
-
-// EndOr same as End, but return middleware
+// EndOr return middleware that only will execute h when its position is last segment of the path
+// if otherwise is nil, defhandler.StatusNotFound is used.
 func EndOr(otherwise http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
-	return func(h http.HandlerFunc) http.HandlerFunc {
-		return Compile(H{
-			"": h,
-		}, otherwise)
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return H{
+			"": next,
+		}.Compile(otherwise)
 	}
 }
 
-// E is *DEPREDECATED*, use MustEnd
-func E(h http.HandlerFunc) http.HandlerFunc {
-	return End(h, nil)
-}
-
-// MustEnd same as End with otherwise equal to nil.
+// MustEnd same as EndOr with otherwise equal to nil.
 func MustEnd(h http.HandlerFunc) http.HandlerFunc {
-	return End(h, nil)
+	return EndOr(nil)(h)
 }
 
-// Stripper return helper for stripping processed segment from r.URL.Path
+// Stripper is middleware for stripping processed segment from r.URL.Path
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s, r := shifter.With(r, ctxKey, nil)
@@ -108,6 +88,9 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 		*r2.URL = *r.URL
 		r2.URL.Path = "/" + strings.Join(rest, "/")
 		r2.URL.RawPath = r2.URL.Path
+		if r2.URL.EscapedPath() != r2.URL.RawPath {
+			r2.URL.RawPath = ""
+		}
 
 		s, r2 = shifter.Reset(r2, ctxKey, nil)
 		next(w, r2)
@@ -124,7 +107,7 @@ func Get(r *http.Request, tag string) (string, bool) {
 func Param(r *http.Request, tag string) string {
 	s, ok := Get(r, tag)
 	if !ok {
-		panic(fmt.Sprintf("segment: param %s not found in the segment", tag))
+		panic("segment: param " + tag + " not found in the segment")
 	}
 	return s
 }

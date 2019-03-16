@@ -15,11 +15,7 @@ import (
 // so request like /a/b/c/d/e will be still handled by /a/b.
 type H map[string]http.HandlerFunc
 
-// Compile into single http.Handler. if notfoundHandler is nil, it will use defhandler.StatusNotFound
-func Compile(h H, notfoundHandler http.HandlerFunc) http.HandlerFunc {
-	if h == nil {
-		h = make(H)
-	}
+func compile(h H, notfoundHandler http.HandlerFunc) http.HandlerFunc {
 	b := &builderT{make(tree)}
 	for k, v := range h {
 		b.add(k, v)
@@ -27,22 +23,17 @@ func Compile(h H, notfoundHandler http.HandlerFunc) http.HandlerFunc {
 	return b.compile(notfoundHandler)
 }
 
-// C same as Compile with notfoundHandler equal to nil
-func C(h H) http.HandlerFunc {
-	return Compile(h, nil)
-}
-
 // Compile into single http.HandlerFunc
 func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return Compile(h, def)
+	return compile(h, def)
 }
 
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return C(h)
+	return compile(h, nil)
 }
 
-// WithTrailingSlash return helper for redirect request to url that with trailing slash
+// WithTrailingSlash is middleware for redirect request to url that with trailing slash
 func WithTrailingSlash(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.EscapedPath()
@@ -59,7 +50,7 @@ func WithTrailingSlash(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WithoutTrailingSlash return helper for redirect request to url that without trailing slash
+// WithoutTrailingSlash is middleware for redirect request to url that without trailing slash
 func WithoutTrailingSlash(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.EscapedPath()

@@ -1,7 +1,6 @@
 package path
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -72,10 +71,10 @@ func (builder *builderT) add(path string, h http.HandlerFunc) {
 }
 
 func (builder *builderT) compile(def http.HandlerFunc) http.HandlerFunc {
-	return compile(builder.root, def)
+	return builderCompile(builder.root, def)
 }
 
-func compile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
+func builderCompile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
 	switch root := root.(type) {
 	case handler:
 		return http.HandlerFunc(root)
@@ -86,15 +85,15 @@ func compile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
 		for key, item := range root {
 			switch key := key.(type) {
 			case segment:
-				hMap[string(key)] = compile(item, def)
+				hMap[string(key)] = builderCompile(item, def)
 			case param:
 				switch paramHandler {
 				case nil:
 					paramTag = string(key)
-					paramHandler = segmentpkg.Tag(paramTag, compile(item, def))
+					paramHandler = segmentpkg.Tag(paramTag, builderCompile(item, def))
 				default:
 					if paramTag != string(key) {
-						panic(fmt.Sprintf("path: multiple param name, :%s != :%s", paramTag, string(key)))
+						panic("path: multiple param name, :" + paramTag + " != :" + string(key))
 					}
 				}
 			default:
@@ -104,7 +103,7 @@ func compile(root interface{}, def http.HandlerFunc) http.HandlerFunc {
 		if paramHandler == nil {
 			paramHandler = def
 		}
-		return segmentpkg.Compile(hMap, paramHandler)
+		return hMap.Compile(paramHandler)
 	default:
 		panic("path: (BUG) invalid tree")
 	}

@@ -7,8 +7,7 @@ import (
 	"github.com/payfazz/go-router/defhandler"
 )
 
-// AllowedMethod in Compile.
-var AllowedMethod = []string{
+var allowedMethod = []string{
 	http.MethodGet,
 	http.MethodHead,
 	http.MethodPost,
@@ -20,20 +19,25 @@ var AllowedMethod = []string{
 	http.MethodTrace,
 }
 
+func inArr(v string, xs []string) bool {
+	for _, x := range xs {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
 // H is type for mapping method and its handler
 type H map[string]http.HandlerFunc
 
-// Compile into single http.HandlerFunc. If def is nil, it will use defhandler.StatusMethodNotAllowed
-func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
-	if h == nil {
-		h = make(H)
-	}
+func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusMethodNotAllowed
 	}
 	for k, v := range h {
-		if !inArr(k, AllowedMethod) {
-			panic("method: method \"" + k + "\" is not allowed.")
+		if !inArr(k, allowedMethod) {
+			panic("method: method '" + k + "' is not allowed.")
 		}
 		if v == nil {
 			h[k] = defhandler.StatusNotImplemented
@@ -48,35 +52,21 @@ func Compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// C same as Compile with def equal to nil
-func C(h H) http.HandlerFunc {
-	return Compile(h, nil)
-}
-
-// Compile into single http.HandlerFunc
+// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusMethodNotAllowed
 func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return Compile(h, def)
+	return compile(h, def)
 }
 
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return C(h)
+	return compile(h, nil)
 }
 
-func inArr(v string, xs []string) bool {
-	for _, x := range xs {
-		if v == x {
-			return true
-		}
-	}
-	return false
-}
-
-// Must return middleware that only allowed in ms
-func Must(ms ...string) func(http.HandlerFunc) http.HandlerFunc {
+// Must return middleware that only allowed method that specified in methods
+func Must(methods ...string) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		h := H{}
-		for _, m := range ms {
+		for _, m := range methods {
 			h[m] = next
 		}
 		return h.C()
