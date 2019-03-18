@@ -56,9 +56,14 @@ func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Req
 
 	s := &Shifter{make(map[string]int), list, 0}
 
-	r = r.WithContext(context.WithValue(
-		r.Context(), key, s,
-	))
+	if tmp := r.Context().Value(key); tmp != nil {
+		rTmp := tmp.(*Shifter)
+		*rTmp = *s
+	} else {
+		r = r.WithContext(context.WithValue(
+			r.Context(), key, s,
+		))
+	}
 
 	return s, r
 }

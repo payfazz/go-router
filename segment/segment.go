@@ -29,11 +29,14 @@ func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var next http.HandlerFunc
 		s, r := shifter.With(r, ctxKey, nil)
+		end := s.End()
 		seg, _ := s.Shift()
 		next, ok := h[seg]
 		if !ok {
 			next = def
-			s.Unshift()
+			if !end {
+				s.Unshift()
+			}
 		}
 		next(w, r)
 	}
@@ -122,4 +125,12 @@ func Rest(r *http.Request) []string {
 func Split(r *http.Request) ([]string, []string) {
 	s, _ := shifter.With(r, ctxKey, nil)
 	return s.Split()
+}
+
+// UnshiftInternalShifter by num of segment
+func UnshiftInternalShifter(r *http.Request, num int) {
+	s, _ := shifter.With(r, ctxKey, nil)
+	for i := 0; i < num; i++ {
+		s.Unshift()
+	}
 }
