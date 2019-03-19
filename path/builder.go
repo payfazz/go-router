@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	segmentpkgInternal "github.com/payfazz/go-router/internal/segment"
 	segmentpkg "github.com/payfazz/go-router/segment"
 )
 
@@ -93,8 +94,7 @@ func builderCompile(root interface{}, def http.HandlerFunc, count int) http.Hand
 		if item, ok := root[segment("")]; ok {
 			tmp := builderCompile(item, def, count+1)
 			def = func(w http.ResponseWriter, r *http.Request) {
-				p, _ := segmentpkg.Split(r)
-				segmentpkg.UnshiftInternalShifter(r, len(p)-count)
+				segmentpkgInternal.SetShifterIndex(r, count)
 				tmp(w, r)
 			}
 		}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	segmentInternal "github.com/payfazz/go-router/internal/segment"
 	"github.com/payfazz/go-router/segment"
 )
 
@@ -34,28 +35,24 @@ func doTest(h http.HandlerFunc, url, expected string) func(t *testing.T) {
 }
 
 func Test1(t *testing.T) {
+	respWriter2 := func(text string, count int) http.HandlerFunc {
+		tmp := respWriter(text)
+		return func(w http.ResponseWriter, r *http.Request) {
+			segmentInternal.SetShifterIndex(r, count)
+			tmp(w, r)
+		}
+	}
 	h := segment.H{
-		"":  respWriter("/"),
-		"a": respWriter("/a"),
-		"b": segment.H{
-			"a": respWriter("/b/a"),
-			"b": respWriter("/b/b"),
-		}.Compile(respWriter("nf")),
 		"c": segment.H{
-			"":  respWriter("/c"),
-			"a": respWriter("/c/a"),
-			"b": respWriter("/c/b"),
+			"x": respWriter2("/c/x", 0),
+			"y": respWriter2("/c/y", 1),
+			"z": respWriter2("/c/z", 3),
+			"a": respWriter2("/c/a", 999),
 		}.Compile(respWriter("nf")),
 	}.Compile(respWriter("nf"))
 
-	t.Run("1", doTest(h, "/", "/||"))
-	t.Run("2", doTest(h, "/a", "/a|a|"))
-	t.Run("3", doTest(h, "/b", "nf|b|"))
-	t.Run("4", doTest(h, "/b/a", "/b/a|b/a|"))
-	t.Run("5", doTest(h, "/b/b", "/b/b|b/b|"))
-	t.Run("6", doTest(h, "/c", "/c|c|"))
-	t.Run("7", doTest(h, "/c/a", "/c/a|c/a|"))
-	t.Run("8", doTest(h, "/c/b", "/c/b|c/b|"))
-	t.Run("9", doTest(h, "/c/c/a/b/c", "nf|c|c/a/b/c"))
-	t.Run("10", doTest(h, "/d/c/a/b/c", "nf||d/c/a/b/c"))
+	t.Run("1", doTest(h, "/c/x/a/b/c/d", "/c/x||c/x/a/b/c/d"))
+	t.Run("2", doTest(h, "/c/y/a/b/c/d", "/c/y|c|y/a/b/c/d"))
+	t.Run("3", doTest(h, "/c/z/a/b/c/d", "/c/z|c/z/a|b/c/d"))
+	t.Run("4", doTest(h, "/c/a/a/b/c/d", "/c/a|c/a/a/b/c/d|"))
 }
