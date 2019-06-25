@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/payfazz/go-router/defhandler"
-	segmentInternal "github.com/payfazz/go-router/internal/segment"
+	"github.com/payfazz/go-router/internal/segmentctx"
 	"github.com/payfazz/go-router/segment/shifter"
 )
 
@@ -25,7 +25,7 @@ func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var next http.HandlerFunc
-		s, r := shifter.With(r, segmentInternal.CtxKey, nil)
+		s, r := shifter.With(r, segmentctx.Key, nil)
 		end := s.End()
 		seg, _ := s.Shift()
 		next, ok := h[seg]
@@ -52,7 +52,7 @@ func (h H) C() http.HandlerFunc {
 // Tag return helper that will tag current segment and process to next segment
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.With(r, segmentInternal.CtxKey, nil)
+		s, r := shifter.With(r, segmentctx.Key, nil)
 		if !s.End() {
 			s.Shift()
 			s.Tag(tag)
@@ -79,7 +79,7 @@ func MustEnd(h http.HandlerFunc) http.HandlerFunc {
 // Stripper is middleware for stripping processed segment from r.URL.Path
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.With(r, segmentInternal.CtxKey, nil)
+		s, r := shifter.With(r, segmentctx.Key, nil)
 		_, rest := s.Split()
 
 		r2 := new(http.Request)
@@ -92,14 +92,14 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 			r2.URL.RawPath = ""
 		}
 
-		s, r2 = shifter.Reset(r2, segmentInternal.CtxKey, nil)
+		s, r2 = shifter.Reset(r2, segmentctx.Key, nil)
 		next(w, r2)
 	}
 }
 
 // Get return tagged segment
 func Get(r *http.Request, tag string) (string, bool) {
-	s, _ := shifter.With(r, segmentInternal.CtxKey, nil)
+	s, _ := shifter.With(r, segmentctx.Key, nil)
 	return s.GetByTag(tag)
 }
 
@@ -120,6 +120,6 @@ func Rest(r *http.Request) []string {
 
 // Split return processed and the rest of the segments
 func Split(r *http.Request) ([]string, []string) {
-	s, _ := shifter.With(r, segmentInternal.CtxKey, nil)
+	s, _ := shifter.With(r, segmentctx.Key, nil)
 	return s.Split()
 }
