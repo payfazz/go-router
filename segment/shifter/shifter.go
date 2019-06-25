@@ -54,7 +54,11 @@ func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Req
 		)
 	}
 
-	s := &Shifter{make(map[string]int), list, 0}
+	s := &Shifter{
+		tag:  make(map[string]int),
+		list: list,
+		next: 0,
+	}
 
 	if tmp := r.Context().Value(key); tmp != nil {
 		rTmp := tmp.(*Shifter)
@@ -77,6 +81,17 @@ func (s *Shifter) Reset(list []string) {
 	s.next = 0
 }
 
+// SetNext set the index for the next Shift.
+func (s *Shifter) SetNext(next int) {
+	if next < 0 {
+		next = 0
+	}
+	if size := s.Size(); next > size {
+		next = size
+	}
+	s.next = next
+}
+
 // Shift to next segment, also telling if already in last segment
 func (s *Shifter) Shift() (string, bool) {
 	if s.End() {
@@ -97,7 +112,7 @@ func (s *Shifter) Unshift() {
 
 // Get i-th segment
 func (s *Shifter) Get(i int) string {
-	if i < 0 || i >= len(s.list) {
+	if i < 0 || i >= s.Size() {
 		return ""
 	}
 	return s.list[i]
@@ -120,13 +135,13 @@ func (s *Shifter) CurrentIndex() int {
 
 // End indicated end segment in the path
 func (s *Shifter) End() bool {
-	return s.next == len(s.list)
+	return s.next == s.Size()
 }
 
 // Split return processed segment and rest of them
 func (s *Shifter) Split() (done []string, rest []string) {
 	done = make([]string, s.next)
-	rest = make([]string, len(s.list)-s.next)
+	rest = make([]string, s.Size()-s.next)
 	copy(done, s.list[:s.next])
 	copy(rest, s.list[s.next:])
 	return done, rest
@@ -139,7 +154,7 @@ func (s *Shifter) Tag(tag string) {
 
 // TagIndex will tag i-th segment
 func (s *Shifter) TagIndex(i int, tag string) {
-	if i < 0 || i >= len(s.list) {
+	if i < 0 || i >= s.Size() {
 		return
 	}
 	s.tag[tag] = i
