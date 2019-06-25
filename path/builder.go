@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	segmentpkgInternal "github.com/payfazz/go-router/internal/segment"
+	"github.com/payfazz/go-router/internal/segmentctx"
 	segmentpkg "github.com/payfazz/go-router/segment"
+	"github.com/payfazz/go-router/segment/shifter"
 )
 
 type segment string
@@ -94,7 +95,12 @@ func builderCompile(root interface{}, def http.HandlerFunc, count int) http.Hand
 		if item, ok := root[segment("")]; ok {
 			tmp := builderCompile(item, def, count+1)
 			def = func(w http.ResponseWriter, r *http.Request) {
-				segmentpkgInternal.SetShifterIndex(r, count)
+				s, r := shifter.With(r, segmentctx.Key, nil)
+				cur := s.CurrentIndex()
+				for i := count; i <= cur; i++ {
+					s.ClearTag(i)
+				}
+				s.SetNext(count)
 				tmp(w, r)
 			}
 		}

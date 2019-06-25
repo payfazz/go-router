@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -11,18 +12,10 @@ import (
 	"github.com/payfazz/go-router/segment"
 )
 
-func doTest(h http.HandlerFunc, url, expected string) func(t *testing.T) {
-	return func(t *testing.T) {
-		r := httptest.NewRequest("GET", url, nil)
-		w := httptest.NewRecorder()
-
-		h(w, r)
-
-		b := w.Body.String()
-		if b != expected {
-			t.Fatalf("expected '%s', found '%s'", expected, b)
-		}
-	}
+type data struct {
+	h        http.HandlerFunc
+	path     string
+	expected string
 }
 
 func respWriter(text string) http.HandlerFunc {
@@ -31,67 +24,166 @@ func respWriter(text string) http.HandlerFunc {
 		sa := strings.Join(a, "/")
 		sb := strings.Join(b, "/")
 		p, pok := segment.Get(r, "p")
-		fmt.Fprintf(w, "%s|%s|%s|%s|%t", text, sa, sb, p, pok)
+		q, qok := segment.Get(r, "q")
+		fmt.Fprintf(w, "%s|%d:%s|%d:%s|%t:%s|%t:%s", text, len(a), sa, len(b), sb, pok, p, qok, q)
+	}
+}
+
+func doTest(t *testing.T, data []data) {
+	t.Parallel()
+
+	for i := 0; i < len(data); i++ {
+		t.Run(strconv.Itoa(i+1), func(t *testing.T) {
+			path := data[i].path
+			h := data[i].h
+			expected := data[i].expected
+
+			t.Parallel()
+
+			r := httptest.NewRequest("GET", path, nil)
+			w := httptest.NewRecorder()
+
+			h(w, r)
+
+			b := w.Body.String()
+			if b != expected {
+				t.Fatalf("expected '%s', found '%s'", expected, b)
+			}
+		})
 	}
 }
 
 func Test1(t *testing.T) {
 	h := path.H{
-		"/a":            respWriter("/a"),
-		"/a/:p":         respWriter("/a/:p"),
-		"/a/:p/a":       respWriter("/a/:p/a"),
-		"/b":            respWriter("/b"),
-		"/b/a":          respWriter("/b/a"),
-		"/d/a/b/c/d/e":  respWriter("/d/a/b/c/d/e"),
-		"/d/a/b/:p/d/e": respWriter("/d/a/b/:p/d/e"),
-		"/e/:p":         respWriter("/e/:p"),
+		"/a":            respWriter("a"),
+		"/a/:p":         respWriter("a/:p"),
+		"/a/:p/a":       respWriter("a/:p/a"),
+		"/a/:p/a/:q/a":  respWriter("a/:p/a/:q/a"),
+		"/b":            respWriter("b"),
+		"/b/a":          respWriter("b/a"),
+		"/d/a/b/c/d/e":  respWriter("d/a/b/c/d/e"),
+		"/d/a/b/:p/d/e": respWriter("d/a/b/:p/d/e"),
+		"/e/:p":         respWriter("e/:p"),
 	}.Compile(respWriter("nf"))
 
-	t.Run("1", doTest(h, "/a", "/a|a|||false"))
-	t.Run("2", doTest(h, "/a/", "/a|a/|||false"))
-	t.Run("3", doTest(h, "/a/a", "/a/:p|a/a||a|true"))
-	t.Run("4", doTest(h, "/a/a/b", "/a/:p|a/a|b|a|true"))
-	t.Run("5", doTest(h, "/a/a/a", "/a/:p/a|a/a/a||a|true"))
-	t.Run("6", doTest(h, "/x/y/z", "nf||x/y/z||false"))
-	t.Run("7", doTest(h, "/b", "/b|b|||false"))
-	t.Run("8", doTest(h, "/c", "nf||c||false"))
-	t.Run("9", doTest(h, "/b/a", "/b/a|b/a|||false"))
-	t.Run("10", doTest(h, "/d/a/b/c/d/e", "/d/a/b/c/d/e|d/a/b/c/d/e|||false"))
-	t.Run("11", doTest(h, "/d/a/b/p/d/e", "/d/a/b/:p/d/e|d/a/b/p/d/e||p|true"))
-	t.Run("12", doTest(h, "/d/a/b//d/e", "/d/a/b/:p/d/e|d/a/b//d/e|||true"))
-	t.Run("13", doTest(h, "/e", "/e/:p|e|||false"))
-	t.Run("14", doTest(h, "/e/", "/e/:p|e/|||true"))
+	doTest(t, []data{
+		{h, "/a", "a|1:a|0:|false:|false:"},
+		{h, "/a/", "a|2:a/|0:|false:|false:"},
+		{h, "/a/a", "a/:p|2:a/a|0:|true:a|false:"},
+		{h, "/a/a/", "a/:p|3:a/a/|0:|true:a|false:"},
+		{h, "/a/a/b", "a/:p|2:a/a|1:b|true:a|false:"},
+		{h, "/a/a/b/", "a/:p|2:a/a|2:b/|true:a|false:"},
+		{h, "/a/a/a", "a/:p/a|3:a/a/a|0:|true:a|false:"},
+		{h, "/a/a/a/", "a/:p/a|4:a/a/a/|0:|true:a|false:"},
+		{h, "/a/pp/a/qq/a", "a/:p/a/:q/a|5:a/pp/a/qq/a|0:|true:pp|true:qq"},
+		{h, "/a/pp/a/qq/b", "a/:p/a|3:a/pp/a|2:qq/b|true:pp|false:"},
+		{h, "/a/pp/a/qq/b/", "a/:p/a|3:a/pp/a|3:qq/b/|true:pp|false:"},
+		{h, "/x/y/z", "nf|0:|3:x/y/z|false:|false:"},
+		{h, "/b", "b|1:b|0:|false:|false:"},
+		{h, "/b/", "b|2:b/|0:|false:|false:"},
+		{h, "/c", "nf|0:|1:c|false:|false:"},
+		{h, "/c/", "nf|0:|2:c/|false:|false:"},
+		{h, "/b/a", "b/a|2:b/a|0:|false:|false:"},
+		{h, "/b/a/", "b/a|2:b/a|1:|false:|false:"},
+		{h, "/b/a/c/d", "b/a|2:b/a|2:c/d|false:|false:"},
+		{h, "/b/a/c/d/", "b/a|2:b/a|3:c/d/|false:|false:"},
+		{h, "/d/a/b/c/d/e", "d/a/b/c/d/e|6:d/a/b/c/d/e|0:|false:|false:"},
+		{h, "/d/a/b/c/d/e/", "d/a/b/c/d/e|6:d/a/b/c/d/e|1:|false:|false:"},
+		{h, "/d/a/b/p/d/e", "d/a/b/:p/d/e|6:d/a/b/p/d/e|0:|true:p|false:"},
+		{h, "/d/a/b/p/d/e/", "d/a/b/:p/d/e|6:d/a/b/p/d/e|1:|true:p|false:"},
+		{h, "/d/a/b//d/e", "d/a/b/:p/d/e|6:d/a/b//d/e|0:|true:|false:"},
+		{h, "/d/a/b//d/e/", "d/a/b/:p/d/e|6:d/a/b//d/e|1:|true:|false:"},
+		{h, "/e", "e/:p|1:e|0:|false:|false:"},
+		{h, "/e/", "e/:p|2:e/|0:|true:|false:"},
+		{h, "/e/x", "e/:p|2:e/x|0:|true:x|false:"},
+		{h, "/e/x/", "e/:p|2:e/x|1:|true:x|false:"},
+	})
 }
 
 func Test2(t *testing.T) {
 	h := path.H{
-		"/a/b/c/d": respWriter("/a/b/c/d"),
-		"/":        respWriter("/"),
+		"/a/b/c/d": respWriter("a/b/c/d"),
+		"/":        respWriter(""),
 	}.Compile(respWriter("nf"))
 
-	t.Run("1", doTest(h, "/a/b/c/d/e/f/g", "/a/b/c/d|a/b/c/d|e/f/g||false"))
-	t.Run("2", doTest(h, "/b/b/c/d/e/f/g", "/||b/b/c/d/e/f/g||false"))
+	doTest(t, []data{
+		{h, "/a/b/c/d/e/f/g", "a/b/c/d|4:a/b/c/d|3:e/f/g|false:|false:"},
+		{h, "/b/b/c/d/e/f/g", "|0:|7:b/b/c/d/e/f/g|false:|false:"},
+	})
 }
 
-func Test3(t *testing.T) {
+func Test3a(t *testing.T) {
 	h := path.H{
-		"/a/b/c/d": respWriter("/a/b/c/d"),
-		"/d/e/f/g": respWriter("/d/e/f/g"),
+		"/a/b/c/d": respWriter("a/b/c/d"),
+		"/d/e/f/g": respWriter("d/e/f/g"),
 	}.Compile(respWriter("nf"))
 
-	t.Run("1", doTest(h, "/a/b/c/d/e/f/g", "/a/b/c/d|a/b/c/d|e/f/g||false"))
-	t.Run("2", doTest(h, "/b/b/c/d/e/f/g", "nf||b/b/c/d/e/f/g||false"))
-	t.Run("3", doTest(h, "/d/e/h/i", "nf|d/e|h/i||false"))
+	doTest(t, []data{
+		{h, "/a/b/c/d/e/f/g", "a/b/c/d|4:a/b/c/d|3:e/f/g|false:|false:"},
+		{h, "/b/b/c/d/e/f/g", "nf|0:|7:b/b/c/d/e/f/g|false:|false:"},
+		{h, "/d/e/h/i", "nf|2:d/e|2:h/i|false:|false:"},
+		{h, "/d/e/h/i/", "nf|2:d/e|3:h/i/|false:|false:"},
+	})
 }
 
-func Test4(t *testing.T) {
+func Test3b(t *testing.T) {
 	h := path.H{
-		"/a/b/c/d": segment.Stripper(respWriter("/a/b/c/d")),
-		"/a":       respWriter("/a"),
-		"/":        respWriter("/"),
+		"/a/b/c/d": respWriter("a/b/c/d"),
+		"/d/e/f/g": respWriter("d/e/f/g"),
+		"/":        respWriter(""),
 	}.Compile(respWriter("nf"))
 
-	t.Run("1", doTest(h, "/a/b/c/d/g/h/i/j", "/a/b/c/d||g/h/i/j||false"))
-	t.Run("2", doTest(h, "/a/b/c", "/a|a|b/c||false"))
-	t.Run("3", doTest(h, "/c/d/e", "/||c/d/e||false"))
+	doTest(t, []data{
+		{h, "/a/b/c/d/e/f/g", "a/b/c/d|4:a/b/c/d|3:e/f/g|false:|false:"},
+		{h, "/b/b/c/d/e/f/g", "|0:|7:b/b/c/d/e/f/g|false:|false:"},
+		{h, "/d/e/h/i", "|0:|4:d/e/h/i|false:|false:"},
+		{h, "/d/e/h/i/", "|0:|5:d/e/h/i/|false:|false:"},
+	})
+}
+
+func Test4a(t *testing.T) {
+	h := path.H{
+		"/a/b/c/d": segment.Stripper(respWriter("a/b/c/d")),
+		"/a":       respWriter("a"),
+		"/":        respWriter(""),
+	}.Compile(respWriter("nf"))
+
+	doTest(t, []data{
+		{h, "/a/b/c/d/g/h/i/j", "a/b/c/d|0:|4:g/h/i/j|false:|false:"},
+		{h, "/a/b/c", "a|1:a|2:b/c|false:|false:"},
+		{h, "/a/b/c/", "a|1:a|3:b/c/|false:|false:"},
+		{h, "/c/d/e", "|0:|3:c/d/e|false:|false:"},
+	})
+}
+
+func Test4b(t *testing.T) {
+	h := path.H{
+		"/a/b/c/d": segment.Stripper(respWriter("a/b/c/d")),
+		"/a":       respWriter("a"),
+	}.Compile(respWriter("nf"))
+
+	doTest(t, []data{
+		{h, "/a/b/c/d/g/h/i/j", "a/b/c/d|0:|4:g/h/i/j|false:|false:"},
+		{h, "/a/b/c", "a|1:a|2:b/c|false:|false:"},
+		{h, "/a/b/c/", "a|1:a|3:b/c/|false:|false:"},
+		{h, "/c/d/e", "nf|0:|3:c/d/e|false:|false:"},
+	})
+}
+
+func Test5(t *testing.T) {
+	h := path.H{
+		"/a/exact": respWriter("a/exact"),
+		"/a/:p":    respWriter("a/:p"),
+	}.Compile(respWriter("nf"))
+
+	doTest(t, []data{
+		{h, "/a/exact", "a/exact|2:a/exact|0:|false:|false:"},
+		{h, "/a/exact/", "a/exact|2:a/exact|1:|false:|false:"},
+		{h, "/a/exact/b/c/d", "a/exact|2:a/exact|3:b/c/d|false:|false:"},
+		{h, "/a/exact/b/c/d/", "a/exact|2:a/exact|4:b/c/d/|false:|false:"},
+		{h, "/a/something", "a/:p|2:a/something|0:|true:something|false:"},
+		{h, "/a/something/", "a/:p|2:a/something|1:|true:something|false:"},
+		{h, "/a/something/b/c/d", "a/:p|2:a/something|3:b/c/d|true:something|false:"},
+		{h, "/a/something/b/c/d/", "a/:p|2:a/something|4:b/c/d/|true:something|false:"},
+	})
 }

@@ -55,7 +55,7 @@ func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Req
 	}
 
 	s := &Shifter{
-		tag:  make(map[string]int),
+		tag:  nil,
 		list: list,
 		next: 0,
 	}
@@ -74,7 +74,7 @@ func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Req
 
 // Reset the shifter, if list is nil then list is not modified
 func (s *Shifter) Reset(list []string) {
-	s.tag = make(map[string]int)
+	s.tag = nil
 	if list != nil {
 		s.list = list
 	}
@@ -152,11 +152,18 @@ func (s *Shifter) Tag(tag string) {
 	s.TagIndex(s.CurrentIndex(), tag)
 }
 
+func (s *Shifter) lazyInitTag() {
+	if s.tag == nil {
+		s.tag = make(map[string]int)
+	}
+}
+
 // TagIndex will tag i-th segment
 func (s *Shifter) TagIndex(i int, tag string) {
 	if i < 0 || i >= s.Size() {
 		return
 	}
+	s.lazyInitTag()
 	s.tag[tag] = i
 }
 
@@ -165,8 +172,29 @@ func (s *Shifter) TagRelative(d int, tag string) {
 	s.TagIndex(s.CurrentIndex()+d, tag)
 }
 
+// DeleteTag delete tag
+func (s *Shifter) DeleteTag(tag string) {
+	s.lazyInitTag()
+	delete(s.tag, tag)
+}
+
+// ClearTag clear all tags on index
+func (s *Shifter) ClearTag(i int) {
+	s.lazyInitTag()
+	what := make([]string, 0, len(s.tag)/2)
+	for k, v := range s.tag {
+		if v == i {
+			what = append(what, k)
+		}
+	}
+	for _, v := range what {
+		delete(s.tag, v)
+	}
+}
+
 // GetByTag return tagged segment
 func (s *Shifter) GetByTag(tag string) (string, bool) {
+	s.lazyInitTag()
 	i, ok := s.tag[tag]
 	if !ok {
 		return "", false

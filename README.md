@@ -21,4 +21,4 @@ see also https://gist.github.com/win-t/8a243301bd227cca6135374cf94d9e98 for exam
 ## TODO
 
 * More documentation and examples
-* create testing. when i wrote this, this project was part of bigger project, all of the testing was done there.
+* create more testing
