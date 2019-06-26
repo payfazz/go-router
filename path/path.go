@@ -10,8 +10,11 @@ import (
 // parameterized segment of path can be prefixed with ":", example:
 //	/info/:userid/name
 //
-// NOTE: handler registered here is compared by prefix path match,
-// so request like /a/b/c/d/e will be still handled by /a/b.
+// handler registered here is compared by prefix path match,
+// 	h := H{
+// 		"a/b": myhandler,
+// 	}.C()
+// request to "/a/b/c/d/e" will be still handled by myhandler, see segment.MustEnd
 type H map[string]http.HandlerFunc
 
 func compile(h H, notfoundHandler http.HandlerFunc) http.HandlerFunc {

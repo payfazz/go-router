@@ -179,11 +179,11 @@ func (s *Shifter) DeleteTag(tag string) {
 }
 
 // ClearTag clear all tags on index
-func (s *Shifter) ClearTag(i int) {
+func (s *Shifter) ClearTag(index int) {
 	s.lazyInitTag()
 	what := make([]string, 0, len(s.tag)/2)
 	for k, v := range s.tag {
-		if v == i {
+		if v == index {
 			what = append(what, k)
 		}
 	}
