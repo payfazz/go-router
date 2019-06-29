@@ -46,7 +46,7 @@ func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
 
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return compile(h, nil)
+	return h.Compile(nil)
 }
 
 // Tag return helper that will tag current segment and process to next segment

@@ -31,7 +31,8 @@ func inArr(v string, xs []string) bool {
 // H is type for mapping method and its handler
 type H map[string]http.HandlerFunc
 
-func compile(h H, def http.HandlerFunc) http.HandlerFunc {
+// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusMethodNotAllowed
+func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusMethodNotAllowed
 	}
@@ -52,14 +53,9 @@ func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusMethodNotAllowed
-func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return compile(h, def)
-}
-
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return compile(h, nil)
+	return h.Compile(nil)
 }
 
 // Must return middleware that only allowed method that specified in methods

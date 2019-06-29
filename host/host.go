@@ -10,7 +10,8 @@ import (
 // H is type for mapping host and its handler
 type H map[string]http.HandlerFunc
 
-func compile(h H, def http.HandlerFunc) http.HandlerFunc {
+// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusBadRequest
+func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusBadRequest
 	}
@@ -28,14 +29,9 @@ func compile(h H, def http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusBadRequest
-func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return compile(h, def)
-}
-
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return compile(h, nil)
+	return h.Compile(nil)
 }
 
 // Must return middleware that only allowed host that specified in hosts
