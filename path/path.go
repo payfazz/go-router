@@ -3,6 +3,8 @@ package path
 
 import (
 	"net/http"
+
+	internalsegment "github.com/payfazz/go-router/internal/segment"
 )
 
 // H is type for mapping path and its handler
@@ -17,20 +19,20 @@ import (
 // request to "/a/b/c/d/e" will be still handled by myhandler, see segment.MustEnd
 type H map[string]http.HandlerFunc
 
-func compile(h H, notfoundHandler http.HandlerFunc) http.HandlerFunc {
+// Compile into single http.HandlerFunc
+func (h H) Compile(notfoundHandler http.HandlerFunc) http.HandlerFunc {
 	b := &builderT{make(tree)}
 	for k, v := range h {
-		b.add(k, v)
+		b.add(k, internalsegment.FromStd(v))
 	}
-	return b.compile(notfoundHandler)
-}
-
-// Compile into single http.HandlerFunc
-func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	return compile(h, def)
+	return internalsegment.IntoStd(
+		b.compile(
+			internalsegment.FromStd(notfoundHandler),
+		),
+	)
 }
 
 // C same as Compile with def equal to nil
 func (h H) C() http.HandlerFunc {
-	return compile(h, nil)
+	return h.Compile(nil)
 }

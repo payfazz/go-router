@@ -18,19 +18,11 @@ type Shifter struct {
 	next int
 }
 
-// From create Shifter from http.Request.
-// It modify the context value, so old http.Request should not be used
-func From(r *http.Request) (*Shifter, *http.Request) {
-	return With(r, nil, nil)
-}
-
-// With create Shifter if this request doesn't have Shifter with the key yet, otherwise return that shifter.
-// It modify the context value, so old http.Request should not be used
+// From return Shifter, if this request doesn't have Shifter with the key yet,
+// it will create new one, otherwise return the old one.
 //
-// key is needed when there are multiple instance of shifter attached to current context.
-//
-// list is the segment of path. If nil, it will derived from r.URL.EscapedPath()
-func With(r *http.Request, key interface{}, list []string) (*Shifter, *http.Request) {
+// It may modify the context value, so old http.Request should not be used
+func From(r *http.Request, key interface{}) (*Shifter, *http.Request) {
 	if key == nil {
 		key = defCtxKey
 	}
@@ -39,20 +31,20 @@ func With(r *http.Request, key interface{}, list []string) (*Shifter, *http.Requ
 		return tmp.(*Shifter), r
 	}
 
-	return Reset(r, key, list)
+	return New(r, key)
 }
 
-// Reset same with With, except it always create new Shifter
-func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Request) {
+// New return new Shifter with the key
+//
+// It modify the context value, so old http.Request should not be used
+func New(r *http.Request, key interface{}) (*Shifter, *http.Request) {
 	if key == nil {
 		key = defCtxKey
 	}
 
-	if list == nil {
-		list = strings.Split(
-			strings.TrimPrefix(r.URL.EscapedPath(), "/"), "/",
-		)
-	}
+	list := strings.Split(
+		strings.TrimPrefix(r.URL.EscapedPath(), "/"), "/",
+	)
 
 	s := &Shifter{
 		tag:  nil,
@@ -60,24 +52,16 @@ func Reset(r *http.Request, key interface{}, list []string) (*Shifter, *http.Req
 		next: 0,
 	}
 
-	if tmp := r.Context().Value(key); tmp != nil {
-		rTmp := tmp.(*Shifter)
-		*rTmp = *s
-	} else {
-		r = r.WithContext(context.WithValue(
-			r.Context(), key, s,
-		))
-	}
+	r = r.WithContext(context.WithValue(
+		r.Context(), key, s,
+	))
 
 	return s, r
 }
 
-// Reset the shifter, if list is nil then list is not modified
-func (s *Shifter) Reset(list []string) {
+// Reset the shifter
+func (s *Shifter) Reset() {
 	s.tag = nil
-	if list != nil {
-		s.list = list
-	}
 	s.next = 0
 }
 

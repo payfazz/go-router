@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/payfazz/go-router/internal/segmentctx"
+	internalsegment "github.com/payfazz/go-router/internal/segment"
 	"github.com/payfazz/go-router/segment"
 	"github.com/payfazz/go-router/segment/shifter"
 )
@@ -97,7 +97,7 @@ func Test2(t *testing.T) {
 	respWriter2 := func(text string, count int) http.HandlerFunc {
 		tmp := respWriter(text)
 		return func(w http.ResponseWriter, r *http.Request) {
-			s, r := shifter.With(r, segmentctx.Key, nil)
+			s, r := shifter.From(r, internalsegment.CtxKey)
 			s.SetNext(count)
 			tmp(w, r)
 		}
