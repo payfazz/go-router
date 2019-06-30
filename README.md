@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/payfazz/go-router?status.svg)](https://godoc.org/github.com/payfazz/go-router)
 
-Fast golang router.
+Simple golang router.
 
 This project is about simple http router that preserve `http.Handler` and `http.HanderFunc` signature.
 
@@ -22,3 +22,6 @@ see also https://gist.github.com/win-t/8a243301bd227cca6135374cf94d9e98 for exam
 
 * More documentation and examples
 * create more testing
+* make it faster by zero-allocation, current bottleneck:
+  * net/http.(*Request).WithContext
+  * strings.Split
