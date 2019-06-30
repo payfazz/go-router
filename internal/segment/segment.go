@@ -10,7 +10,8 @@ import (
 // H .
 type H map[string]HandlerFunc
 
-func compile(h H, def HandlerFunc) HandlerFunc {
+// Compile .
+func (h H) Compile(def HandlerFunc) HandlerFunc {
 	if def == nil {
 		def = FromStd(defhandler.StatusNotFound)
 	}
@@ -32,11 +33,6 @@ func compile(h H, def HandlerFunc) HandlerFunc {
 		}
 		next(s, w, r)
 	}
-}
-
-// Compile .
-func (h H) Compile(def HandlerFunc) HandlerFunc {
-	return compile(h, def)
 }
 
 // Tag .
