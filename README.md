@@ -12,6 +12,8 @@ It heavily use clousure and tail call, so it will be faster when tail-cail-optim
 
 see also https://github.com/payfazz/go-middleware for middleware
 
+see https://github.com/payfazz/go-handler for alternative signature of http handling
+
 
 ### Host based routing
 `host` package provide host based routing
