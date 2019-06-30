@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	internalsegment "github.com/payfazz/go-router/internal/segment"
-	"github.com/payfazz/go-router/segment/shifter"
 )
 
 // H is type for mapping segment and its handler
@@ -59,27 +58,34 @@ func MustEnd(h http.HandlerFunc) http.HandlerFunc {
 // Stripper is middleware for stripping processed segment from r.URL.Path
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s, r := shifter.From(r, internalsegment.CtxKey)
+		s, r2 := internalsegment.TryShifterFrom(r)
 		_, rest := s.Split()
 
-		r2 := new(http.Request)
-		*r2 = *r
-		r2.URL = new(url.URL)
-		*r2.URL = *r.URL
-		r2.URL.Path = "/" + strings.Join(rest, "/")
-		r2.URL.RawPath = r2.URL.Path
-		if r2.URL.EscapedPath() != r2.URL.RawPath {
-			r2.URL.RawPath = ""
+		newURL := new(url.URL)
+		*newURL = *r2.URL
+		newURL.Path = "/" + strings.Join(rest, "/")
+		newURL.RawPath = newURL.Path
+		if newURL.EscapedPath() != newURL.RawPath {
+			newURL.RawPath = ""
 		}
 
-		_, r2 = shifter.New(r2, internalsegment.CtxKey)
-		next(w, r2)
+		// temporary change r2.URL
+		oldURL := r2.URL
+		r2.URL = newURL
+
+		// create shifter based on newURL on r2, this will clone r2
+		_, r3 := internalsegment.NewShifterFor(r2)
+
+		// change r2.URL back to normal
+		r2.URL = oldURL
+
+		next(w, r3)
 	}
 }
 
 // Get return tagged segment
 func Get(r *http.Request, tag string) (string, bool) {
-	s, _ := shifter.From(r, internalsegment.CtxKey)
+	s, _ := internalsegment.TryShifterFrom(r)
 	return s.GetByTag(tag)
 }
 
@@ -100,6 +106,6 @@ func Rest(r *http.Request) []string {
 
 // Split return processed and the rest of the segments
 func Split(r *http.Request) ([]string, []string) {
-	s, _ := shifter.From(r, internalsegment.CtxKey)
+	s, _ := internalsegment.TryShifterFrom(r)
 	return s.Split()
 }

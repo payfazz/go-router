@@ -10,7 +10,6 @@ import (
 
 	internalsegment "github.com/payfazz/go-router/internal/segment"
 	"github.com/payfazz/go-router/segment"
-	"github.com/payfazz/go-router/segment/shifter"
 )
 
 type data struct {
@@ -97,9 +96,9 @@ func Test2(t *testing.T) {
 	respWriter2 := func(text string, count int) http.HandlerFunc {
 		tmp := respWriter(text)
 		return func(w http.ResponseWriter, r *http.Request) {
-			s, r := shifter.From(r, internalsegment.CtxKey)
+			s, r2 := internalsegment.TryShifterFrom(r)
 			s.SetNext(count)
-			tmp(w, r)
+			tmp(w, r2)
 		}
 	}
 	h := segment.H{

@@ -1,16 +1,6 @@
 // Package shifter provide simple routing by dividing path into its segment
 package shifter
 
-import (
-	"context"
-	"net/http"
-	"strings"
-)
-
-type ctxType struct{}
-
-var defCtxKey ctxType
-
 // Shifter hold state of shifting segment in the path
 type Shifter struct {
 	tag  map[string]int
@@ -18,45 +8,15 @@ type Shifter struct {
 	next int
 }
 
-// From return Shifter, if this request doesn't have Shifter with the key yet,
-// it will create new one, otherwise return the old one.
-//
-// It may modify the context value, so old http.Request should not be used
-func From(r *http.Request, key interface{}) (*Shifter, *http.Request) {
-	if key == nil {
-		key = defCtxKey
-	}
-
-	if tmp := r.Context().Value(key); tmp != nil {
-		return tmp.(*Shifter), r
-	}
-
-	return New(r, key)
-}
-
 // New return new Shifter with the key
 //
 // It modify the context value, so old http.Request should not be used
-func New(r *http.Request, key interface{}) (*Shifter, *http.Request) {
-	if key == nil {
-		key = defCtxKey
-	}
-
-	list := strings.Split(
-		strings.TrimPrefix(r.URL.EscapedPath(), "/"), "/",
-	)
-
-	s := &Shifter{
+func New(list []string) *Shifter {
+	return &Shifter{
 		tag:  nil,
 		list: list,
 		next: 0,
 	}
-
-	r = r.WithContext(context.WithValue(
-		r.Context(), key, s,
-	))
-
-	return s, r
 }
 
 // Reset the shifter
@@ -165,7 +125,7 @@ func (s *Shifter) DeleteTag(tag string) {
 // ClearTag clear all tags on index
 func (s *Shifter) ClearTag(index int) {
 	s.lazyInitTag()
-	what := make([]string, 0, len(s.tag)/2)
+	var what []string
 	for k, v := range s.tag {
 		if v == index {
 			what = append(what, k)
