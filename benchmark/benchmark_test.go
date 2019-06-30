@@ -31,11 +31,11 @@ var (
 func init() {
 	func() {
 		hGoRouter = path.H{
-			"/a":       respWriter("1"),
-			"/b/c":     respWriter("2"),
-			"/c/d/e":   respWriter("3"),
-			"/d/e/f":   respWriter("4"),
-			"/f/g/h/i": respWriter("5"),
+			"/a":       respWriter([]byte("1")),
+			"/b/c":     respWriter([]byte("2")),
+			"/c/d/e":   respWriter([]byte("3")),
+			"/d/e/f":   respWriter([]byte("4")),
+			"/f/g/h/i": respWriter([]byte("5")),
 			"/g/:h/i/:j/k": func(w http.ResponseWriter, r *http.Request) {
 				h, _ := segment.Get(r, "h")
 				hi, _ := strconv.Atoi(h)
@@ -48,11 +48,11 @@ func init() {
 
 	func() {
 		hh := mux.NewRouter()
-		hh.HandleFunc("/a", respWriter("1"))
-		hh.HandleFunc("/b/c", respWriter("2"))
-		hh.HandleFunc("/c/d/e", respWriter("3"))
-		hh.HandleFunc("/d/e/f", respWriter("4"))
-		hh.HandleFunc("/f/g/h/i", respWriter("5"))
+		hh.HandleFunc("/a", respWriter([]byte("1")))
+		hh.HandleFunc("/b/c", respWriter([]byte("2")))
+		hh.HandleFunc("/c/d/e", respWriter([]byte("3")))
+		hh.HandleFunc("/d/e/f", respWriter([]byte("4")))
+		hh.HandleFunc("/f/g/h/i", respWriter([]byte("5")))
 		hh.HandleFunc("/g/{h}/i/{j}/k", func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			h := vars["h"]
@@ -68,11 +68,11 @@ func init() {
 		gin.SetMode(gin.ReleaseMode)
 
 		hh := gin.New()
-		hh.GET("/a", respWriterGin("1"))
-		hh.GET("/b/c", respWriterGin("2"))
-		hh.GET("/c/d/e", respWriterGin("3"))
-		hh.GET("/d/e/f", respWriterGin("4"))
-		hh.GET("/f/g/h/i", respWriterGin("5"))
+		hh.GET("/a", respWriterGin([]byte("1")))
+		hh.GET("/b/c", respWriterGin([]byte("2")))
+		hh.GET("/c/d/e", respWriterGin([]byte("3")))
+		hh.GET("/d/e/f", respWriterGin([]byte("4")))
+		hh.GET("/f/g/h/i", respWriterGin([]byte("5")))
 		hh.GET("/g/:h/i/:j/k", func(c *gin.Context) {
 			h := c.Param("h")
 			hi, _ := strconv.Atoi(h)
@@ -86,11 +86,11 @@ func init() {
 
 	func() {
 		hh := echo.New()
-		hh.GET("/a", respWriterEcho("1"))
-		hh.GET("/b/c", respWriterEcho("2"))
-		hh.GET("/c/d/e", respWriterEcho("3"))
-		hh.GET("/d/e/f", respWriterEcho("4"))
-		hh.GET("/f/g/h/i", respWriterEcho("5"))
+		hh.GET("/a", respWriterEcho([]byte("1")))
+		hh.GET("/b/c", respWriterEcho([]byte("2")))
+		hh.GET("/c/d/e", respWriterEcho([]byte("3")))
+		hh.GET("/d/e/f", respWriterEcho([]byte("4")))
+		hh.GET("/f/g/h/i", respWriterEcho([]byte("5")))
 		hh.GET("/g/:h/i/:j/k", func(c echo.Context) error {
 			h := c.Param("h")
 			hi, _ := strconv.Atoi(h)
@@ -119,21 +119,21 @@ func init() {
 	}
 }
 
-func respWriter(text string) http.HandlerFunc {
+func respWriter(data []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(text))
+		w.Write(data)
 	}
 }
 
-func respWriterGin(text string) gin.HandlerFunc {
+func respWriterGin(data []byte) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Write([]byte(text))
+		c.Writer.Write(data)
 	}
 }
 
-func respWriterEcho(text string) echo.HandlerFunc {
+func respWriterEcho(data []byte) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		c.Response().Writer.Write([]byte(text))
+		c.Response().Writer.Write(data)
 		return nil
 	}
 }
