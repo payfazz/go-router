@@ -31,6 +31,8 @@ func (h H) C() http.HandlerFunc {
 }
 
 // Tag return helper that will tag current segment and process to next segment
+//
+// The tagged segment can be retrieved later via Get function.
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
 	return internalsegment.IntoStd(
 		internalsegment.Tag(
