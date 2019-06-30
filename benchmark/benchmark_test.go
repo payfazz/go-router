@@ -1,9 +1,11 @@
 package benchmark_test
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"testing"
 
@@ -21,6 +23,9 @@ var (
 	hGorillaMux http.HandlerFunc
 	hGin        http.HandlerFunc
 	hEcho       http.HandlerFunc
+
+	w *httptest.ResponseRecorder
+	r *http.Request
 )
 
 func init() {
@@ -97,6 +102,21 @@ func init() {
 
 		hEcho = hh.ServeHTTP
 	}()
+
+	w = httptest.NewRecorder()
+	w.Body.Grow(1024)
+
+	r = &http.Request{
+		Method: "GET",
+		URL: &url.URL{
+			Scheme: "http",
+			Host:   "localhost",
+		},
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Host:       "localhost",
+	}
 }
 
 func respWriter(text string) http.HandlerFunc {
@@ -118,56 +138,56 @@ func respWriterEcho(text string) echo.HandlerFunc {
 	}
 }
 
-func check(b *testing.B, h http.HandlerFunc, path string, data string) {
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", path, nil)
+func check(b *testing.B, h http.HandlerFunc, path string, data []byte) {
+	w.Body.Reset()
+	r.URL.Path = path
 	h(w, r)
-	if w.Body.String() != data {
+	if !bytes.Equal(w.Body.Bytes(), data) {
 		b.Fail()
 	}
 }
 
 func BenchmarkGoRouter(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		check(b, hGoRouter, "/a", "1")
-		check(b, hGoRouter, "/b/c", "2")
-		check(b, hGoRouter, "/c/d/e", "3")
-		check(b, hGoRouter, "/d/e/f", "4")
-		check(b, hGoRouter, "/f/g/h/i", "5")
-		check(b, hGoRouter, "/g/3/i/3/k", "6")
+		check(b, hGoRouter, "/a", []byte("1"))
+		check(b, hGoRouter, "/b/c", []byte("2"))
+		check(b, hGoRouter, "/c/d/e", []byte("3"))
+		check(b, hGoRouter, "/d/e/f", []byte("4"))
+		check(b, hGoRouter, "/f/g/h/i", []byte("5"))
+		check(b, hGoRouter, "/g/3/i/3/k", []byte("6"))
 	}
 }
 
 func BenchmarkGorillaMux(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		check(b, hGorillaMux, "/a", "1")
-		check(b, hGorillaMux, "/b/c", "2")
-		check(b, hGorillaMux, "/c/d/e", "3")
-		check(b, hGorillaMux, "/d/e/f", "4")
-		check(b, hGorillaMux, "/f/g/h/i", "5")
-		check(b, hGorillaMux, "/g/3/i/3/k", "6")
+		check(b, hGorillaMux, "/a", []byte("1"))
+		check(b, hGorillaMux, "/b/c", []byte("2"))
+		check(b, hGorillaMux, "/c/d/e", []byte("3"))
+		check(b, hGorillaMux, "/d/e/f", []byte("4"))
+		check(b, hGorillaMux, "/f/g/h/i", []byte("5"))
+		check(b, hGorillaMux, "/g/3/i/3/k", []byte("6"))
 	}
 
 }
 
 func BenchmarkGin(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		check(b, hGin, "/a", "1")
-		check(b, hGin, "/b/c", "2")
-		check(b, hGin, "/c/d/e", "3")
-		check(b, hGin, "/d/e/f", "4")
-		check(b, hGin, "/f/g/h/i", "5")
-		check(b, hGin, "/g/3/i/3/k", "6")
+		check(b, hGin, "/a", []byte("1"))
+		check(b, hGin, "/b/c", []byte("2"))
+		check(b, hGin, "/c/d/e", []byte("3"))
+		check(b, hGin, "/d/e/f", []byte("4"))
+		check(b, hGin, "/f/g/h/i", []byte("5"))
+		check(b, hGin, "/g/3/i/3/k", []byte("6"))
 	}
 }
 
 func BenchmarkEcho(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		check(b, hEcho, "/a", "1")
-		check(b, hEcho, "/b/c", "2")
-		check(b, hEcho, "/c/d/e", "3")
-		check(b, hEcho, "/d/e/f", "4")
-		check(b, hEcho, "/f/g/h/i", "5")
-		check(b, hEcho, "/g/3/i/3/k", "6")
+		check(b, hEcho, "/a", []byte("1"))
+		check(b, hEcho, "/b/c", []byte("2"))
+		check(b, hEcho, "/c/d/e", []byte("3"))
+		check(b, hEcho, "/d/e/f", []byte("4"))
+		check(b, hEcho, "/f/g/h/i", []byte("5"))
+		check(b, hEcho, "/g/3/i/3/k", []byte("6"))
 	}
 }
