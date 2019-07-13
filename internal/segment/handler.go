@@ -44,18 +44,21 @@ func TryShifterFrom(r *http.Request) (*shifter.Shifter, *http.Request) {
 	if tmp != nil {
 		return tmp.(*shifter.Shifter), r
 	}
-	return NewShifterFor(r)
+	return NewShifterFor(r, strings.Split(
+		strings.TrimPrefix(r.URL.EscapedPath(), "/"), "/",
+	))
 }
 
 // NewShifterFor .
-func NewShifterFor(r *http.Request) (*shifter.Shifter, *http.Request) {
-	list := strings.Split(
-		strings.TrimPrefix(r.URL.EscapedPath(), "/"), "/",
-	)
-
+//
+// will clone r
+func NewShifterFor(r *http.Request, list []string) (*shifter.Shifter, *http.Request) {
 	s := shifter.New(list)
-	r = r.WithContext(context.WithValue(
+
+	// WithContext will clone r
+	r2 := r.WithContext(context.WithValue(
 		r.Context(), ctxKey, s,
 	))
-	return s, r
+
+	return s, r2
 }

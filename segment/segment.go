@@ -71,14 +71,17 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 			newURL.RawPath = ""
 		}
 
-		// temporary change r2.URL
+		// temporary set r2.URL to nil, so it will not be cloned
 		oldURL := r2.URL
-		r2.URL = newURL
+		r2.URL = nil
 
 		// create shifter based on newURL on r2, this will clone r2
-		_, r3 := internalsegment.NewShifterFor(r2)
+		_, r3 := internalsegment.NewShifterFor(r2, strings.Split(
+			strings.TrimPrefix(newURL.EscapedPath(), "/"), "/",
+		))
+		r3.URL = newURL
 
-		// change r2.URL back to normal
+		// change r2.URL back new
 		r2.URL = oldURL
 
 		next(w, r3)
