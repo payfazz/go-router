@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/payfazz/go-router/defhandler"
 	internalsegment "github.com/payfazz/go-router/internal/segment"
 )
 
@@ -14,15 +15,28 @@ type H map[string]http.HandlerFunc
 
 // Compile into single http.HandlerFunc. if def is nil, default handler is defhandler.StatusNotFound
 func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
-	hInternal := make(internalsegment.H)
-	for k, v := range h {
-		hInternal[k] = internalsegment.FromStd(v)
+	if def == nil {
+		def = defhandler.StatusNotFound
 	}
-	return internalsegment.IntoStd(
-		hInternal.Compile(
-			internalsegment.FromStd(def),
-		),
-	)
+	for k, v := range h {
+		if v == nil {
+			h[k] = defhandler.StatusNotImplemented
+		}
+	}
+	return func(w http.ResponseWriter, rOld *http.Request) {
+		s, r := internalsegment.TryShifterFrom(rOld)
+		var next http.HandlerFunc
+		end := s.End()
+		seg, _ := s.Shift()
+		next, ok := h[seg]
+		if !ok {
+			next = def
+			if !end {
+				s.Unshift()
+			}
+		}
+		next(w, r)
+	}
 }
 
 // C same as Compile with def equal to nil
@@ -34,12 +48,14 @@ func (h H) C() http.HandlerFunc {
 //
 // The tagged segment can be retrieved later via Get function.
 func Tag(tag string, next http.HandlerFunc) http.HandlerFunc {
-	return internalsegment.IntoStd(
-		internalsegment.Tag(
-			tag,
-			internalsegment.FromStd(next),
-		),
-	)
+	return func(w http.ResponseWriter, rOld *http.Request) {
+		s, r := internalsegment.TryShifterFrom(rOld)
+		if !s.End() {
+			s.Shift()
+			s.Tag(tag)
+		}
+		next(w, r)
+	}
 }
 
 // EndOr return middleware that only will execute h when its position is last segment of the path

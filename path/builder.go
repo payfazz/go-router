@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	internalsegment "github.com/payfazz/go-router/internal/segment"
-	"github.com/payfazz/go-router/segment/shifter"
+	segmentpkg "github.com/payfazz/go-router/segment"
 )
 
 type segment string
 type param string
 
-type handler internalsegment.HandlerFunc
+type handler http.HandlerFunc
 
 type tree map[interface{}]interface{} // map[(segment or param)](tree or handler)
 
@@ -19,7 +19,7 @@ type builderT struct {
 	root tree
 }
 
-func (builder *builderT) add(path string, h internalsegment.HandlerFunc) {
+func (builder *builderT) add(path string, h http.HandlerFunc) {
 	current := builder.root
 	path = strings.TrimPrefix(path, "/")
 	path = strings.TrimSuffix(path, "/")
@@ -78,28 +78,29 @@ func (builder *builderT) add(path string, h internalsegment.HandlerFunc) {
 	}
 }
 
-func (builder *builderT) compile(def internalsegment.HandlerFunc) internalsegment.HandlerFunc {
+func (builder *builderT) compile(def http.HandlerFunc) http.HandlerFunc {
 	return builderCompile(builder.root, def, 0)
 }
 
-func builderCompile(root interface{}, def internalsegment.HandlerFunc, count int) internalsegment.HandlerFunc {
+func builderCompile(root interface{}, def http.HandlerFunc, count int) http.HandlerFunc {
 	switch root := root.(type) {
 	case handler:
-		return internalsegment.HandlerFunc(root)
+		return http.HandlerFunc(root)
 	case tree:
-		hMap := make(internalsegment.H)
-		var paramHandler internalsegment.HandlerFunc
+		hMap := make(segmentpkg.H)
+		var paramHandler http.HandlerFunc
 		var paramTag string
 
 		if item, ok := root[segment("")]; ok {
 			tmp := builderCompile(item, def, count+1)
-			def = func(s *shifter.Shifter, w http.ResponseWriter, r *http.Request) {
+			def = func(w http.ResponseWriter, rOld *http.Request) {
+				s, r := internalsegment.TryShifterFrom(rOld)
 				cur := s.CurrentIndex()
 				for i := count; i <= cur; i++ {
 					s.ClearTag(i)
 				}
 				s.SetNext(count)
-				tmp(s, w, r)
+				tmp(w, r)
 			}
 		}
 
@@ -111,7 +112,7 @@ func builderCompile(root interface{}, def internalsegment.HandlerFunc, count int
 				switch paramHandler {
 				case nil:
 					paramTag = string(key)
-					paramHandler = internalsegment.Tag(paramTag, builderCompile(item, def, count+1))
+					paramHandler = segmentpkg.Tag(paramTag, builderCompile(item, def, count+1))
 				default:
 					if paramTag != string(key) {
 						panic("path: multiple param name, :" + paramTag + " != :" + string(key))

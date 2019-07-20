@@ -3,8 +3,6 @@ package path
 
 import (
 	"net/http"
-
-	internalsegment "github.com/payfazz/go-router/internal/segment"
 )
 
 // H is type for mapping path and its handler
@@ -23,13 +21,9 @@ type H map[string]http.HandlerFunc
 func (h H) Compile(notfoundHandler http.HandlerFunc) http.HandlerFunc {
 	b := &builderT{make(tree)}
 	for k, v := range h {
-		b.add(k, internalsegment.FromStd(v))
+		b.add(k, v)
 	}
-	return internalsegment.IntoStd(
-		b.compile(
-			internalsegment.FromStd(notfoundHandler),
-		),
-	)
+	return b.compile(notfoundHandler)
 }
 
 // C same as Compile with def equal to nil
