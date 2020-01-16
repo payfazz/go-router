@@ -9,8 +9,6 @@ type Shifter struct {
 }
 
 // New return new Shifter with the key
-//
-// It modify the context value, so old http.Request should not be used
 func New(list []string) *Shifter {
 	return &Shifter{
 		tag:  nil,
