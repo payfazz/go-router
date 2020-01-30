@@ -32,7 +32,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func endHandler(w http.ResponseWriter, r *http.Request) {
-	shifter, r := shifterFor(r)
+	var shifter *shifter.Shifter
+	shifter, r = shifterFor(r)
 	_, end := shifter.Shift()
 	fmt.Fprintf(w, "segment=%v, end=%v\n", shifter.Get(shifter.CurrentIndex()), end)
 	for i := -2; i <= 2; i++ {
