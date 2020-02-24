@@ -25,6 +25,7 @@ func (builder *builderT) add(path string, h http.HandlerFunc) {
 	path = strings.TrimSuffix(path, "/")
 	paths := strings.Split(path, "/")
 
+	// for intermediate segment
 	for i := 0; i < len(paths)-1; i++ {
 		segStr := paths[i]
 		var item interface{}
@@ -51,29 +52,32 @@ func (builder *builderT) add(path string, h http.HandlerFunc) {
 		}
 	}
 
-	segStr := paths[len(paths)-1]
-	var item interface{}
-	if strings.HasPrefix(segStr, ":") {
-		item = param(segStr[1:])
-	} else {
-		item = segment(segStr)
-	}
-	next, ok := current[item]
-	if !ok {
-		current[item] = handler(h)
-	} else {
-		switch next := next.(type) {
-		case tree:
-			next[segment("")] = handler(h)
-		case handler:
-			if path == "" {
-				path = "/"
-			} else {
-				path = "/" + path + "/"
+	// for last segment
+	if len(paths) > 0 {
+		segStr := paths[len(paths)-1]
+		var item interface{}
+		if strings.HasPrefix(segStr, ":") {
+			item = param(segStr[1:])
+		} else {
+			item = segment(segStr)
+		}
+		next, ok := current[item]
+		if !ok {
+			current[item] = handler(h)
+		} else {
+			switch next := next.(type) {
+			case tree:
+				next[segment("")] = handler(h)
+			case handler:
+				if path == "" {
+					path = "/"
+				} else {
+					path = "/" + path + "/"
+				}
+				panic("path: duplicate handler: " + path)
+			default:
+				panic("path: DEADCODE: (BUG) invalid tree")
 			}
-			panic("path: duplicate handler: " + path)
-		default:
-			panic("path: DEADCODE: (BUG) invalid tree")
 		}
 	}
 }

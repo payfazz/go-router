@@ -3,30 +3,10 @@ package method
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/payfazz/go-router/defhandler"
 )
-
-var allowedMethod = []string{
-	http.MethodGet,
-	http.MethodHead,
-	http.MethodPost,
-	http.MethodPut,
-	http.MethodPatch,
-	http.MethodDelete,
-	http.MethodConnect,
-	http.MethodOptions,
-	http.MethodTrace,
-}
-
-func inArr(v string, xs []string) bool {
-	for _, x := range xs {
-		if v == x {
-			return true
-		}
-	}
-	return false
-}
 
 // H is type for mapping method and its handler
 type H map[string]http.HandlerFunc
@@ -36,16 +16,18 @@ func (h H) Compile(def http.HandlerFunc) http.HandlerFunc {
 	if def == nil {
 		def = defhandler.StatusMethodNotAllowed
 	}
+	realH := make(H)
 	for k, v := range h {
-		if !inArr(k, allowedMethod) {
-			panic("method: method '" + k + "' is not allowed.")
-		}
 		if v == nil {
-			h[k] = defhandler.StatusNotImplemented
+			v = defhandler.StatusNotImplemented
 		}
+		if _, ok := realH[strings.ToUpper(k)]; ok {
+			panic("method: duplicate handler for " + strings.ToUpper(k))
+		}
+		realH[strings.ToUpper(k)] = v
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		next, ok := h[r.Method]
+		next, ok := realH[strings.ToUpper(r.Method)]
 		if !ok {
 			next = def
 		}
