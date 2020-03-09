@@ -7,6 +7,6 @@ import (
 )
 
 // ByMethod will return handler for routing via method
-func ByMethod(next map[string]http.HandlerFunc) http.HandlerFunc {
-	return ((v1method.H)(next)).C()
+func ByMethod(handler map[string]http.HandlerFunc) http.HandlerFunc {
+	return ((v1method.H)(handler)).C()
 }

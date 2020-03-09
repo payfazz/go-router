@@ -6,86 +6,104 @@ import (
 	"github.com/payfazz/go-router/defhandler"
 )
 
-// ShifterGetter is callback for getting shifter from context
-type ShifterGetter func(r *http.Request) *SegmentShifter
+// ShifterGetter is callback for getting shifter from the given request
+type ShifterGetter func(r *http.Request) *Shifter
 
-// ParameterSetter is callback for setting parameter
-type ParameterSetter func(r *http.Request, param string)
+// BySegment is same with BySegmentWithDef(handler, nil)
+func (sg ShifterGetter) BySegment(handler map[string]http.HandlerFunc) http.HandlerFunc {
+	return sg.BySegmentWithDef(handler, nil)
+}
 
-// BySegment will return handler for routing via segment
+// BySegmentWithDef will return handler for routing via segment,
 //
-// if getShifter is nil, it will default shifter from ShifterInjector
+// if then handler for spesific segment is not found it will return def,
 //
-// will panic if getShifter is nil but you not use ShifterInjector before it
-func BySegment(getShifter ShifterGetter, def http.HandlerFunc, next map[string]http.HandlerFunc) http.HandlerFunc {
-	if getShifter == nil {
-		getShifter = defaultShifter
-	}
+// if def is nil defhandler.StatusNotFound is used
+func (sg ShifterGetter) BySegmentWithDef(handler map[string]http.HandlerFunc, def http.HandlerFunc) http.HandlerFunc {
+
 	if def == nil {
 		def = defhandler.StatusNotFound
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		shifter := getShifter(r)
-		alreadyEnd := shifter.End()
+		shifter := sg(r)
+		alreadyEnd := shifter.end()
 
-		var handler http.HandlerFunc = def
-
-		if nextHandler, ok := next[shifter.Next()]; ok {
-			handler = nextHandler
+		var next http.HandlerFunc
+		if tmp, ok := handler[shifter.next()]; ok {
+			next = tmp
 		} else {
-			handler = def
+			next = def
 			if !alreadyEnd {
-				shifter.Prev()
+				shifter.prev()
 			}
 		}
 
-		handler(w, r)
+		next(w, r)
 	}
 }
 
-// ByParam return composite handler
+// ByParam return handler for handling parameter in segment,
 //
-// it will shift current segment and and call setParam with it
+// empty will be called if the param is empty, otherwise handler will be called.
 //
-// empty will be called if current segment is empty, otherwise handler will be called
-//
-// if getShifter is nil, it will default shifter from ShifterInjector
-//
-// will panic if getShifter is nil but you not use ShifterInjector before it
-func ByParam(getShifter ShifterGetter, setParam ParameterSetter, empty http.HandlerFunc, handler http.HandlerFunc) http.HandlerFunc {
-	if getShifter == nil {
-		getShifter = defaultShifter
-	}
-
+// if empty is nil, handler will be used.
+func (sg ShifterGetter) ByParam(setParam ParamSetter, empty http.HandlerFunc, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		param := getShifter(r).Next()
-		setParam(r, param)
-		if param == "" && empty != nil {
-			empty(w, r)
-		} else {
-			handler(w, r)
+		shifter := sg(r)
+		_, rest := shifter.state()
+
+		param := shifter.next()
+		next := empty
+
+		if param != "" || rest > 1 {
+			next = handler
 		}
+
+		if next == nil {
+			next = handler
+		}
+		setParam(r, param)
+		next(w, r)
 	}
 }
 
 // SegmentMustEnd return middleware to make sure that the handler is the last segment
 //
-// if getShifter is nil, it will default shifter from ShifterInjector
+// if the segment is not the end, defhandler.StatusNotFound is used
+func (sg ShifterGetter) SegmentMustEnd() func(http.HandlerFunc) http.HandlerFunc {
+	return sg.SegmentMustEndOr(nil)
+}
+
+// SegmentMustEndOr same with SegmentMustEnd but using def as handler when the segment is not end,
 //
-// will panic if getShifter is nil but you not use ShifterInjector before it
-func SegmentMustEnd(getShifter ShifterGetter) func(http.HandlerFunc) http.HandlerFunc {
-	if getShifter == nil {
-		getShifter = defaultShifter
+// if def is nil, defhandler.StatusNotFound is used
+func (sg ShifterGetter) SegmentMustEndOr(def http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
+	if def == nil {
+		def = defhandler.StatusNotFound
 	}
 
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			if getShifter(r).Next() != "" {
-				defhandler.StatusNotFound(w, r)
+			shifter := sg(r)
+			_, restN := shifter.state()
+			if restN == 0 || (restN == 1 && shifter.next() == "") {
+				next(w, r)
 				return
 			}
-			next(w, r)
+
+			def(w, r)
 		}
+	}
+}
+
+// ParamSetter is callback for setting parameter
+type ParamSetter func(r *http.Request, param string)
+
+// SetParamIntoHeader return ParamSetter that can be used to set header
+// based on parameter on segment
+func SetParamIntoHeader(key string) ParamSetter {
+	return func(r *http.Request, param string) {
+		r.Header.Set(key, param)
 	}
 }
