@@ -14,8 +14,8 @@ type State struct {
 }
 
 // NewState from provided path, usually path is r.URL.EscapedPath()
-func NewState(path string) *State {
-	return &State{
+func NewState(path string) State {
+	return State{
 		segment: strings.Split(
 			strings.TrimPrefix(path, "/"), "/",
 		),

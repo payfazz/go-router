@@ -35,7 +35,7 @@ func TestShifterNextEnd(t *testing.T) {
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	assert(t, s.next() == "c", "must return c")
-	assert(t, stateIsEnd(s), "must end")
+	assert(t, stateIsEnd(&s), "must end")
 }
 
 func TestShifterNextEndTrailingSlash(t *testing.T) {
@@ -43,9 +43,9 @@ func TestShifterNextEndTrailingSlash(t *testing.T) {
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	assert(t, s.next() == "c", "must return c")
-	assert(t, !stateIsEnd(s), "must not end")
+	assert(t, !stateIsEnd(&s), "must not end")
 	assert(t, s.next() == "", "emptystring")
-	assert(t, stateIsEnd(s), "must end")
+	assert(t, stateIsEnd(&s), "must end")
 }
 
 func TestShifterStateAndSplit(t *testing.T) {
