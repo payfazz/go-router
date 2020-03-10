@@ -77,3 +77,40 @@ func TestRouterByParam(t *testing.T) {
 	doTest("/lala//aa", "param:", "empty param(1)")
 	doTest("/lala//", "param:", "empty param(2)")
 }
+
+func TestRouterBySegment2(t *testing.T) {
+	handler := router.DefaultInjector()(router.Default.BySegmentWithDef(
+		map[string]http.HandlerFunc{
+			"":  genHandler("/"),
+			"a": genHandler("/a"),
+			"b": router.Default.BySegmentWithDef(
+				map[string]http.HandlerFunc{
+					"":  genHandler("/b"),
+					"a": genHandler("/b/a"),
+					"b": genHandler("/b/b"),
+				},
+				genHandler("404(2)"),
+			),
+		},
+		genHandler("404(1)"),
+	))
+
+	doTest := func(target string, data string, msg string) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", target, nil)
+		handler.ServeHTTP(rec, req)
+		assert(t, rec.Body.String() == data, msg)
+	}
+
+	doTest("/", "/", "test root")
+	doTest("/a", "/a", "test /a")
+	doTest("/a/", "/a", "test /a/")
+	doTest("/a/a", "/a", "test /a/a")
+	doTest("/b", "/b", "test /b")
+	doTest("/b/a", "/b/a", "test /b/a")
+	doTest("/b/a/a", "/b/a", "test /b/a/a")
+	doTest("/b/a/b", "/b/a", "test /b/a/b")
+	doTest("/b/b", "/b/b", "test /b/b")
+	doTest("/b/d", "404(2)", "test /b/d")
+	doTest("/c", "404(1)", "test /c")
+}

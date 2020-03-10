@@ -12,54 +12,46 @@ import (
 // you should embed this struct into another struct and call Init to initialize the
 // routing state
 type State struct {
-	segment []string
-	cursor  int
+	path string
+	idx  int
 }
 
 // Init from provided path, usually path is r.URL.EscapedPath()
 func (s *State) Init(path string) {
-	s.segment = strings.Split(
-		strings.TrimPrefix(path, "/"), "/",
-	)
-	s.cursor = 0
+	if path == "" {
+		path = "/"
+	}
+	if path[0] != '/' {
+		path = "/" + path
+	}
+	s.path = path
+	s.idx = 0
 }
 
 func (s *State) next() string {
-	if s.cursor == len(s.segment) {
+	if s.idx == len(s.path) {
 		return ""
 	}
-	segment := s.segment[s.cursor]
-	s.cursor++
+	s.idx++
+	end := strings.IndexByte(s.path[s.idx:], '/')
+	if end == -1 {
+		end = len(s.path)
+	} else {
+		end += s.idx
+	}
+	segment := s.path[s.idx:end]
+	s.idx = end
 	return segment
 }
 
 func (s *State) prev() {
-	if s.cursor == 0 {
+	if s.idx == 0 {
 		return
 	}
-	s.cursor--
-}
-
-func (s *State) progressCursor() (int, int) {
-	return s.cursor, len(s.segment) - s.cursor
+	s.idx = strings.LastIndexByte(s.path[:s.idx], '/')
 }
 
 // Progress return processed segment and rest of them
 func (s *State) Progress() (done, rest string) {
-	doneN, restN := s.progressCursor()
-	doneList := make([]string, doneN)
-	restList := make([]string, restN)
-	copy(doneList, s.segment[:s.cursor])
-	copy(restList, s.segment[s.cursor:])
-	if len(doneList) == 0 {
-		done = ""
-	} else {
-		done = "/" + strings.Join(doneList, "/")
-	}
-	if len(restList) == 0 {
-		rest = ""
-	} else {
-		rest = "/" + strings.Join(restList, "/")
-	}
-	return
+	return s.path[:s.idx], s.path[s.idx:]
 }

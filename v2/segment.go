@@ -25,11 +25,11 @@ func (router Router) BySegment(handler HandlerMapping) http.HandlerFunc {
 func (router Router) BySegmentWithDef(handler HandlerMapping, def http.HandlerFunc) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		state := router(r)
-		_, rest := state.progressCursor()
+		_, rest := state.Progress()
 
 		var next http.HandlerFunc
 
-		if rest == 0 {
+		if rest == "" {
 			next = handler[""]
 		} else {
 			var ok bool
@@ -56,15 +56,15 @@ func (router Router) BySegmentWithDef(handler HandlerMapping, def http.HandlerFu
 func (router Router) ByParam(setParam ParamSetter, root http.HandlerFunc, param http.HandlerFunc) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		state := router(r)
-		_, rest := state.progressCursor()
+		_, rest := state.Progress()
 
 		var next http.HandlerFunc
 
-		if rest == 0 {
+		if rest == "" {
 			next = root
 		} else {
 			segment := state.next()
-			if segment == "" && rest == 1 { // treat trailing slash as end
+			if segment == "" && rest == "/" {
 				next = root
 			} else {
 				setParam(r, segment)
@@ -93,12 +93,15 @@ func (router Router) SegmentMustEndOr(def http.HandlerFunc) func(http.HandlerFun
 	return func(handler http.HandlerFunc) http.HandlerFunc {
 		return (func(w http.ResponseWriter, r *http.Request) {
 			state := router(r)
-			_, rest := state.progressCursor()
+			_, rest := state.Progress()
 
 			var next http.HandlerFunc
 
-			if rest == 0 || (state.next() == "" && rest == 1) {
+			if rest == "" || (state.next() == "" && rest == "/") {
 				next = handler
+				if rest != "" {
+					state.prev()
+				}
 			} else {
 				next = def
 			}

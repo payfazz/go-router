@@ -11,8 +11,8 @@ func assert(t *testing.T, cond bool, msgf string, msgs ...interface{}) {
 }
 
 func stateIsEnd(s *State) bool {
-	_, rest := s.progressCursor()
-	return rest == 0
+	_, rest := s.Progress()
+	return rest == ""
 }
 
 func TestShifterNextPrev(t *testing.T) {
@@ -55,77 +55,64 @@ func TestShifterNextEndTrailingSlash(t *testing.T) {
 }
 
 func TestShifterStateAndSplit(t *testing.T) {
-	var doneN, restN int
 	var done, rest string
 	var s State
 	s.Init("/a/b/c")
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 0 && restN == 3 && done == "" && rest == "/a/b/c", "invalid progress 1")
+	assert(t, done == "" && rest == "/a/b/c", "invalid progress 1")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 1 && restN == 2 && done == "/a" && rest == "/b/c", "invalid progress 2")
+	assert(t, done == "/a" && rest == "/b/c", "invalid progress 2")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 2 && restN == 1 && done == "/a/b" && rest == "/c", "invalid progress 3")
+	assert(t, done == "/a/b" && rest == "/c", "invalid progress 3")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 3 && restN == 0 && done == "/a/b/c" && rest == "", "invalid progress 4")
+	assert(t, done == "/a/b/c" && rest == "", "invalid progress 4")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 3 && restN == 0 && done == "/a/b/c" && rest == "", "invalid progress 5")
+	assert(t, done == "/a/b/c" && rest == "", "invalid progress 5")
 }
 
 func TestShifterStateAndSplitWithTrailingSlash(t *testing.T) {
-	var doneN, restN int
 	var done, rest string
 	var s State
 	s.Init("/a/b/c/")
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 0 && restN == 4 && done == "" && rest == "/a/b/c/", "invalid progress 1")
+	assert(t, done == "" && rest == "/a/b/c/", "invalid progress 1")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 1 && restN == 3 && done == "/a" && rest == "/b/c/", "invalid progress 2")
+	assert(t, done == "/a" && rest == "/b/c/", "invalid progress 2")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 2 && restN == 2 && done == "/a/b" && rest == "/c/", "invalid progress 3")
+	assert(t, done == "/a/b" && rest == "/c/", "invalid progress 3")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 3 && restN == 1 && done == "/a/b/c" && rest == "/", "invalid progress 4")
+	assert(t, done == "/a/b/c" && rest == "/", "invalid progress 4")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 4 && restN == 0 && done == "/a/b/c/" && rest == "", "invalid progress 5")
+	assert(t, done == "/a/b/c/" && rest == "", "invalid progress 5")
 
 	s.next()
 
-	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
-	assert(t, doneN == 4 && restN == 0 && done == "/a/b/c/" && rest == "", "invalid progress 6")
+	assert(t, done == "/a/b/c/" && rest == "", "invalid progress 6")
 }
