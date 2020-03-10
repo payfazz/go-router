@@ -6,94 +6,105 @@ import (
 	"github.com/payfazz/go-router/defhandler"
 )
 
-// ShifterGetter is callback for getting shifter from the given request
-type ShifterGetter func(r *http.Request) *Shifter
+// HandlerMapping is type alias for mapping string to handler
+type HandlerMapping = map[string]http.HandlerFunc
 
-// BySegment is same with BySegmentWithDef(handler, nil)
-func (sg ShifterGetter) BySegment(handler map[string]http.HandlerFunc) http.HandlerFunc {
-	return sg.BySegmentWithDef(handler, nil)
+// Router is func to get routing state,
+// this state will be used for routing decission based on next segment available
+type Router func(*http.Request) *State
+
+// BySegment generate a handler that take routing decission based on provided segment handler
+//
+// if segment handler is not found in handler, will generate http status 404
+func (router Router) BySegment(handler HandlerMapping) http.HandlerFunc {
+	return router.BySegmentWithDef(handler, defhandler.StatusNotFound)
 }
 
-// BySegmentWithDef will return handler for routing via segment,
-//
-// if then handler for spesific segment is not found it will return def,
-//
-// if def is nil defhandler.StatusNotFound is used
-func (sg ShifterGetter) BySegmentWithDef(handler map[string]http.HandlerFunc, def http.HandlerFunc) http.HandlerFunc {
-
-	if def == nil {
-		def = defhandler.StatusNotFound
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		shifter := sg(r)
-		alreadyEnd := shifter.end()
+// BySegmentWithDef is same with BySegment, but you can provide custom default handler
+// instead of generating http status 404
+func (router Router) BySegmentWithDef(handler HandlerMapping, def http.HandlerFunc) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		state := router(r)
+		_, rest := state.progressCursor()
 
 		var next http.HandlerFunc
-		if tmp, ok := handler[shifter.next()]; ok {
-			next = tmp
+
+		if rest == 0 {
+			next = handler[""]
 		} else {
-			next = def
-			if !alreadyEnd {
-				shifter.prev()
+			var ok bool
+			next, ok = handler[state.next()]
+			if !ok {
+				state.prev()
 			}
 		}
 
+		if next == nil {
+			next = def
+		}
+
 		next(w, r)
-	}
+	})
 }
 
-// ByParam return handler for handling parameter in segment,
+// ByParam generate handler that take next segment as parameter
 //
-// empty will be called if the param is empty, otherwise handler will be called.
+// root will be called if the param is empty string and that param is the last segment,
+// otherwise param will be called.
 //
-// if empty is nil, handler will be used.
-func (sg ShifterGetter) ByParam(setParam ParamSetter, empty http.HandlerFunc, handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		shifter := sg(r)
-		_, rest := shifter.state()
+// if root is nil, then param will be used.
+func (router Router) ByParam(setParam ParamSetter, root http.HandlerFunc, param http.HandlerFunc) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		state := router(r)
+		_, rest := state.progressCursor()
 
-		param := shifter.next()
-		next := empty
+		var next http.HandlerFunc
 
-		if param != "" || rest > 1 {
-			next = handler
+		if rest == 0 {
+			next = root
+		} else {
+			segment := state.next()
+			if segment == "" && rest == 1 { // treat trailing slash as end
+				next = root
+			} else {
+				setParam(r, segment)
+				next = param
+			}
 		}
 
 		if next == nil {
-			next = handler
+			next = param
 		}
-		setParam(r, param)
+
 		next(w, r)
-	}
+	})
 }
 
 // SegmentMustEnd return middleware to make sure that the handler is the last segment
 //
-// if the segment is not the end, defhandler.StatusNotFound is used
-func (sg ShifterGetter) SegmentMustEnd() func(http.HandlerFunc) http.HandlerFunc {
-	return sg.SegmentMustEndOr(nil)
+// if the segment is not last segment, will generate http status 404
+func (router Router) SegmentMustEnd() func(http.HandlerFunc) http.HandlerFunc {
+	return router.SegmentMustEndOr(defhandler.StatusNotFound)
 }
 
-// SegmentMustEndOr same with SegmentMustEnd but using def as handler when the segment is not end,
-//
-// if def is nil, defhandler.StatusNotFound is used
-func (sg ShifterGetter) SegmentMustEndOr(def http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
-	if def == nil {
-		def = defhandler.StatusNotFound
-	}
+// SegmentMustEndOr same with SegmentMustEnd, but you can provide custom default handler
+// instead of generating http status 404
+func (router Router) SegmentMustEndOr(def http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
+	return func(handler http.HandlerFunc) http.HandlerFunc {
+		return (func(w http.ResponseWriter, r *http.Request) {
+			state := router(r)
+			_, rest := state.progressCursor()
 
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			shifter := sg(r)
-			_, restN := shifter.state()
-			if restN == 0 || (restN == 1 && shifter.next() == "") {
-				next(w, r)
-				return
+			var next http.HandlerFunc
+
+			if rest == 0 || (state.next() == "" && rest == 1) {
+				next = handler
+			} else {
+				next = def
 			}
 
-			def(w, r)
-		}
+			next(w, r)
+		})
 	}
 }
 

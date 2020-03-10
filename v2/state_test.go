@@ -10,8 +10,13 @@ func assert(t *testing.T, cond bool, msgf string, msgs ...interface{}) {
 	}
 }
 
+func stateIsEnd(s *State) bool {
+	_, rest := s.progressCursor()
+	return rest == 0
+}
+
 func TestShifterNextPrev(t *testing.T) {
-	s := NewShifter("/a/b/c")
+	s := NewState("/a/b/c")
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	s.prev()
@@ -26,63 +31,63 @@ func TestShifterNextPrev(t *testing.T) {
 }
 
 func TestShifterNextEnd(t *testing.T) {
-	s := NewShifter("/a/b/c")
+	s := NewState("/a/b/c")
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	assert(t, s.next() == "c", "must return c")
-	assert(t, s.end(), "must end")
+	assert(t, stateIsEnd(s), "must end")
 }
 
 func TestShifterNextEndTrailingSlash(t *testing.T) {
-	s := NewShifter("/a/b/c/")
+	s := NewState("/a/b/c/")
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	assert(t, s.next() == "c", "must return c")
-	assert(t, !s.end(), "must not end")
+	assert(t, !stateIsEnd(s), "must not end")
 	assert(t, s.next() == "", "emptystring")
-	assert(t, s.end(), "must end")
+	assert(t, stateIsEnd(s), "must end")
 }
 
 func TestShifterStateAndSplit(t *testing.T) {
 	var doneN, restN int
 	var done, rest string
-	s := NewShifter("/a/b/c")
+	s := NewState("/a/b/c")
 
-	doneN, restN = s.state()
-	done, rest = s.Split()
-	assert(t, doneN == 0 && restN == 3 && done == "/" && rest == "a/b/c", "invalid state and split 1")
-
-	s.next()
-
-	doneN, restN = s.state()
-	done, rest = s.Split()
-	assert(t, doneN == 1 && restN == 2 && done == "/a" && rest == "b/c", "invalid state and split 2")
+	doneN, restN = s.progressCursor()
+	done, rest = s.Progress()
+	assert(t, doneN == 0 && restN == 3 && done == "/" && rest == "a/b/c", "invalid progress 1")
 
 	s.next()
 
-	doneN, restN = s.state()
-	done, rest = s.Split()
-	assert(t, doneN == 2 && restN == 1 && done == "/a/b" && rest == "c", "invalid state and split 3")
+	doneN, restN = s.progressCursor()
+	done, rest = s.Progress()
+	assert(t, doneN == 1 && restN == 2 && done == "/a" && rest == "b/c", "invalid progress 2")
+
+	s.next()
+
+	doneN, restN = s.progressCursor()
+	done, rest = s.Progress()
+	assert(t, doneN == 2 && restN == 1 && done == "/a/b" && rest == "c", "invalid progress 3")
 }
 
 func TestShifterStateAndSplitWithTrailingSlash(t *testing.T) {
 	var doneN, restN int
 	var done, rest string
-	s := NewShifter("/a/b/c/")
+	s := NewState("/a/b/c/")
 
-	doneN, restN = s.state()
-	done, rest = s.Split()
-	assert(t, doneN == 0 && restN == 4 && done == "/" && rest == "a/b/c/", "invalid state and split 1")
-
-	s.next()
-
-	doneN, restN = s.state()
-	done, rest = s.Split()
-	assert(t, doneN == 1 && restN == 3 && done == "/a" && rest == "b/c/", "invalid state and split 2")
+	doneN, restN = s.progressCursor()
+	done, rest = s.Progress()
+	assert(t, doneN == 0 && restN == 4 && done == "/" && rest == "a/b/c/", "invalid progress 1")
 
 	s.next()
 
-	doneN, restN = s.state()
-	done, rest = s.Split()
-	assert(t, doneN == 2 && restN == 2 && done == "/a/b" && rest == "c/", "invalid state and split 3")
+	doneN, restN = s.progressCursor()
+	done, rest = s.Progress()
+	assert(t, doneN == 1 && restN == 3 && done == "/a" && rest == "b/c/", "invalid progress 2")
+
+	s.next()
+
+	doneN, restN = s.progressCursor()
+	done, rest = s.Progress()
+	assert(t, doneN == 2 && restN == 2 && done == "/a/b" && rest == "c/", "invalid progress 3")
 }

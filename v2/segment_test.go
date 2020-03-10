@@ -21,10 +21,10 @@ func genHandler(text string) http.HandlerFunc {
 	}
 }
 func TestRouterBySegment(t *testing.T) {
-	handler := router.DefaultShifterInjector()(router.DefaultShifter.BySegmentWithDef(
+	handler := router.DefaultInjector()(router.Default.BySegmentWithDef(
 		map[string]http.HandlerFunc{
 			"a": genHandler("/a"),
-			"b": router.DefaultShifter.SegmentMustEndOr(genHandler("404(2)"))(genHandler("/b")),
+			"b": router.Default.SegmentMustEndOr(genHandler("404(2)"))(genHandler("/b")),
 		},
 		genHandler("404(1)"),
 	))
@@ -32,7 +32,7 @@ func TestRouterBySegment(t *testing.T) {
 	doTest := func(target string, data string, msg string) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", target, nil)
-		handler(rec, req)
+		handler.ServeHTTP(rec, req)
 		assert(t, rec.Body.String() == data, msg)
 	}
 
@@ -50,14 +50,14 @@ func TestRouterBySegment(t *testing.T) {
 }
 
 func TestRouterByParam(t *testing.T) {
-	handler := router.DefaultShifterInjector()(
-		router.DefaultShifter.BySegment(map[string]http.HandlerFunc{
-			"lala": router.DefaultShifter.ByParam(
+	handler := router.DefaultInjector()(
+		router.Default.BySegment(map[string]http.HandlerFunc{
+			"lala": router.Default.ByParam(
 				router.SetParamIntoHeader("X-Param"),
 				genHandler("root"),
-				func(w http.ResponseWriter, r *http.Request) {
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					fmt.Fprintf(w, "param:%s", r.Header.Get("X-Param"))
-				},
+				}),
 			),
 		}),
 	)
@@ -65,8 +65,9 @@ func TestRouterByParam(t *testing.T) {
 	doTest := func(target string, data string, msg string) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", target, nil)
-		handler(rec, req)
-		assert(t, rec.Body.String() == data, msg)
+		handler.ServeHTTP(rec, req)
+		tmp := rec.Body.String()
+		assert(t, tmp == data, fmt.Sprintf("%s|%s|%s", msg, tmp, data))
 	}
 
 	doTest("/lala", "root", "root without trailing slash")

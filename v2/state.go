@@ -4,18 +4,18 @@ import (
 	"strings"
 )
 
-// Shifter is state for routing.
+// State for routing.
 //
 // Where you store this state is up to you, usually the state is saved in
 // the request's context.
-type Shifter struct {
+type State struct {
 	segment []string
 	cursor  int
 }
 
-// NewShifter from provided path, usually path is r.URL.EscapedPath()
-func NewShifter(path string) *Shifter {
-	return &Shifter{
+// NewState from provided path, usually path is r.URL.EscapedPath()
+func NewState(path string) *State {
+	return &State{
 		segment: strings.Split(
 			strings.TrimPrefix(path, "/"), "/",
 		),
@@ -23,7 +23,7 @@ func NewShifter(path string) *Shifter {
 	}
 }
 
-func (s *Shifter) next() string {
+func (s *State) next() string {
 	if s.cursor == len(s.segment) {
 		return ""
 	}
@@ -32,24 +32,20 @@ func (s *Shifter) next() string {
 	return segment
 }
 
-func (s *Shifter) prev() {
+func (s *State) prev() {
 	if s.cursor == 0 {
 		return
 	}
 	s.cursor--
 }
 
-func (s *Shifter) state() (done, rest int) {
+func (s *State) progressCursor() (int, int) {
 	return s.cursor, len(s.segment) - s.cursor
 }
 
-func (s *Shifter) end() bool {
-	return s.cursor == len(s.segment)
-}
-
-// Split return processed segment and rest of them
-func (s *Shifter) Split() (done, rest string) {
-	doneN, restN := s.state()
+// Progress return processed segment and rest of them
+func (s *State) Progress() (done, rest string) {
+	doneN, restN := s.progressCursor()
 	doneList := make([]string, doneN)
 	restList := make([]string, restN)
 	copy(doneList, s.segment[:s.cursor])
