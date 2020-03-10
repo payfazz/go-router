@@ -13,7 +13,8 @@ var stateKey stateKeyT
 func DefaultInjector() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			state := NewState(r.URL.EscapedPath())
+			var state State
+			state.Init(r.URL.EscapedPath())
 			next(w, r.WithContext(
 				context.WithValue(r.Context(), stateKey, &state),
 			))

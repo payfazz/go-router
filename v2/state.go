@@ -8,19 +8,20 @@ import (
 //
 // Where you store this state is up to you, usually the state is saved in
 // the request's context.
+//
+// you should embed this struct into another struct and call Init to initialize the
+// routing state
 type State struct {
 	segment []string
 	cursor  int
 }
 
-// NewState from provided path, usually path is r.URL.EscapedPath()
-func NewState(path string) State {
-	return State{
-		segment: strings.Split(
-			strings.TrimPrefix(path, "/"), "/",
-		),
-		cursor: 0,
-	}
+// Init from provided path, usually path is r.URL.EscapedPath()
+func (s *State) Init(path string) {
+	s.segment = strings.Split(
+		strings.TrimPrefix(path, "/"), "/",
+	)
+	s.cursor = 0
 }
 
 func (s *State) next() string {

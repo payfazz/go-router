@@ -16,7 +16,8 @@ func stateIsEnd(s *State) bool {
 }
 
 func TestShifterNextPrev(t *testing.T) {
-	s := NewState("/a/b/c")
+	var s State
+	s.Init("/a/b/c")
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	s.prev()
@@ -31,7 +32,8 @@ func TestShifterNextPrev(t *testing.T) {
 }
 
 func TestShifterNextEnd(t *testing.T) {
-	s := NewState("/a/b/c")
+	var s State
+	s.Init("/a/b/c")
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	assert(t, s.next() == "c", "must return c")
@@ -39,7 +41,8 @@ func TestShifterNextEnd(t *testing.T) {
 }
 
 func TestShifterNextEndTrailingSlash(t *testing.T) {
-	s := NewState("/a/b/c/")
+	var s State
+	s.Init("/a/b/c/")
 	assert(t, s.next() == "a", "must return a")
 	assert(t, s.next() == "b", "must return b")
 	assert(t, s.next() == "c", "must return c")
@@ -51,7 +54,8 @@ func TestShifterNextEndTrailingSlash(t *testing.T) {
 func TestShifterStateAndSplit(t *testing.T) {
 	var doneN, restN int
 	var done, rest string
-	s := NewState("/a/b/c")
+	var s State
+	s.Init("/a/b/c")
 
 	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
@@ -73,7 +77,8 @@ func TestShifterStateAndSplit(t *testing.T) {
 func TestShifterStateAndSplitWithTrailingSlash(t *testing.T) {
 	var doneN, restN int
 	var done, rest string
-	s := NewState("/a/b/c/")
+	var s State
+	s.Init("/a/b/c/")
 
 	doneN, restN = s.progressCursor()
 	done, rest = s.Progress()
