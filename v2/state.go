@@ -51,5 +51,15 @@ func (s *State) Progress() (done, rest string) {
 	restList := make([]string, restN)
 	copy(doneList, s.segment[:s.cursor])
 	copy(restList, s.segment[s.cursor:])
-	return "/" + strings.Join(doneList, "/"), strings.Join(restList, "/")
+	if len(doneList) == 0 {
+		done = ""
+	} else {
+		done = "/" + strings.Join(doneList, "/")
+	}
+	if len(restList) == 0 {
+		rest = ""
+	} else {
+		rest = "/" + strings.Join(restList, "/")
+	}
+	return
 }
