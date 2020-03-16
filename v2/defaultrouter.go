@@ -10,8 +10,8 @@ type stateKeyT struct{}
 var stateKey stateKeyT
 
 // DefaultInjector return middleware to inject default router state into context
-func DefaultInjector() func(http.HandlerFunc) http.HandlerFunc {
-	return func(next http.HandlerFunc) http.HandlerFunc {
+func DefaultInjector() func(Handler) Handler {
+	return func(next Handler) Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var state State
 			state.Init(r.URL.EscapedPath())

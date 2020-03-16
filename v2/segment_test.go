@@ -22,7 +22,7 @@ func genHandler(text string) http.HandlerFunc {
 }
 func TestRouterBySegment(t *testing.T) {
 	handler := router.DefaultInjector()(router.Default.BySegmentWithDef(
-		map[string]http.HandlerFunc{
+		router.Hmap{
 			"a": genHandler("/a"),
 			"b": router.Default.SegmentMustEndOr(genHandler("404(2)"))(genHandler("/b")),
 		},
@@ -51,7 +51,7 @@ func TestRouterBySegment(t *testing.T) {
 
 func TestRouterByParam(t *testing.T) {
 	handler := router.DefaultInjector()(
-		router.Default.BySegment(map[string]http.HandlerFunc{
+		router.Default.BySegment(router.Hmap{
 			"lala": router.Default.ByParam(
 				router.SetParamIntoHeader("X-Param"),
 				genHandler("root"),
@@ -80,11 +80,11 @@ func TestRouterByParam(t *testing.T) {
 
 func TestRouterBySegment2(t *testing.T) {
 	handler := router.DefaultInjector()(router.Default.BySegmentWithDef(
-		map[string]http.HandlerFunc{
+		router.Hmap{
 			"":  genHandler("/"),
 			"a": genHandler("/a"),
 			"b": router.Default.BySegmentWithDef(
-				map[string]http.HandlerFunc{
+				router.Hmap{
 					"":  genHandler("/b"),
 					"a": genHandler("/b/a"),
 					"b": genHandler("/b/b"),

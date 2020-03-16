@@ -25,7 +25,7 @@ func Example() {
 	}
 
 	handler := router.DefaultInjector()(
-		router.Default.BySegment(map[string]http.HandlerFunc{
+		router.Default.BySegment(router.Hmap{
 			"":  genHandler("/"),
 			"a": genHandler("/a"),
 			"b": genHandler("/b"),

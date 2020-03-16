@@ -6,34 +6,27 @@ import (
 	"github.com/payfazz/go-router/defhandler"
 )
 
-// HandlerMapping is type alias for mapping string to handler
-type HandlerMapping = map[string]http.HandlerFunc
-
-// Router is func to get routing state,
-// this state will be used for routing decission based on next segment available
-type Router func(*http.Request) *State
-
-// BySegment generate a handler that take routing decission based on provided segment handler
+// BySegment generate a handler that take routing decission based on provided hmap
 //
-// if segment handler is not found in handler, will generate http status 404
-func (router Router) BySegment(handler HandlerMapping) http.HandlerFunc {
-	return router.BySegmentWithDef(handler, defhandler.StatusNotFound)
+// if segment handler is not found in hmap, will generate http status 404
+func (router Router) BySegment(hmap Hmap) Handler {
+	return router.BySegmentWithDef(hmap, defhandler.StatusNotFound)
 }
 
 // BySegmentWithDef is same with BySegment, but you can provide custom default handler
 // instead of generating http status 404
-func (router Router) BySegmentWithDef(handler HandlerMapping, def http.HandlerFunc) http.HandlerFunc {
+func (router Router) BySegmentWithDef(hmap Hmap, def Handler) Handler {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		state := router(r)
 		_, rest := state.Progress()
 
-		var next http.HandlerFunc
+		var next Handler
 
 		if rest == "" {
-			next = handler[""]
+			next = hmap[""]
 		} else {
 			var ok bool
-			next, ok = handler[state.next()]
+			next, ok = hmap[state.next()]
 			if !ok {
 				state.prev()
 			}
@@ -47,18 +40,18 @@ func (router Router) BySegmentWithDef(handler HandlerMapping, def http.HandlerFu
 	})
 }
 
-// ByParam generate handler that take next segment as parameter
+// ByParam generate handler that take segment as parameter
 //
 // root will be called if the param is empty string and that param is the last segment,
 // otherwise param will be called.
 //
 // if root is nil, then param will be used.
-func (router Router) ByParam(setParam ParamSetter, root http.HandlerFunc, param http.HandlerFunc) http.HandlerFunc {
+func (router Router) ByParam(setParam ParamSetter, root Handler, param Handler) Handler {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		state := router(r)
 		_, rest := state.Progress()
 
-		var next http.HandlerFunc
+		var next Handler
 
 		if rest == "" {
 			next = root
@@ -83,19 +76,19 @@ func (router Router) ByParam(setParam ParamSetter, root http.HandlerFunc, param 
 // SegmentMustEnd return middleware to make sure that the handler is the last segment
 //
 // if the segment is not last segment, will generate http status 404
-func (router Router) SegmentMustEnd() func(http.HandlerFunc) http.HandlerFunc {
+func (router Router) SegmentMustEnd() func(Handler) Handler {
 	return router.SegmentMustEndOr(defhandler.StatusNotFound)
 }
 
 // SegmentMustEndOr same with SegmentMustEnd, but you can provide custom default handler
 // instead of generating http status 404
-func (router Router) SegmentMustEndOr(def http.HandlerFunc) func(http.HandlerFunc) http.HandlerFunc {
-	return func(handler http.HandlerFunc) http.HandlerFunc {
+func (router Router) SegmentMustEndOr(def Handler) func(Handler) Handler {
+	return func(handler Handler) Handler {
 		return (func(w http.ResponseWriter, r *http.Request) {
 			state := router(r)
 			_, rest := state.Progress()
 
-			var next http.HandlerFunc
+			var next Handler
 
 			if rest == "" || (state.next() == "" && rest == "/") {
 				next = handler
