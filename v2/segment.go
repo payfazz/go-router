@@ -57,7 +57,7 @@ func (router Router) ByParam(setParam ParamSetter, root Handler, param Handler) 
 			next = root
 		} else {
 			segment := state.next()
-			if segment == "" && rest == "/" {
+			if rest == "/" {
 				next = root
 			} else {
 				setParam(r, segment)
@@ -90,11 +90,8 @@ func (router Router) SegmentMustEndOr(def Handler) func(Handler) Handler {
 
 			var next Handler
 
-			if rest == "" || (state.next() == "" && rest == "/") {
+			if rest == "" || rest == "/" {
 				next = handler
-				if rest != "" {
-					state.prev()
-				}
 			} else {
 				next = def
 			}
