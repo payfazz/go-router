@@ -79,13 +79,12 @@ func Stripper(next http.HandlerFunc) http.HandlerFunc {
 		s, r2 := internalsegment.TryShifterFrom(r)
 		_, rest := s.Split()
 
+		restURL, _ := url.Parse("/" + strings.Join(rest, "/"))
+
 		newURL := new(url.URL)
 		*newURL = *r2.URL
-		newURL.Path = "/" + strings.Join(rest, "/")
-		newURL.RawPath = newURL.Path
-		if newURL.EscapedPath() != newURL.RawPath {
-			newURL.RawPath = ""
-		}
+		newURL.Path = restURL.Path
+		newURL.RawPath = restURL.RawPath
 
 		// temporary set r2.URL to nil, so it will not be cloned
 		oldURL := r2.URL
