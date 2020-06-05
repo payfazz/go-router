@@ -42,6 +42,22 @@ func (h H) C() http.HandlerFunc {
 
 // Must return middleware that only allowed method that specified in methods
 func Must(methods ...string) func(http.HandlerFunc) http.HandlerFunc {
+	// little optimization for single value
+	if len(methods) == 1 {
+		expected := strings.ToUpper(methods[0])
+		return func(next http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				got := strings.ToUpper(r.Method)
+				if got != expected {
+					defhandler.StatusMethodNotAllowed(w, r)
+					return
+				}
+
+				next(w, r)
+			}
+		}
+	}
+
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		h := H{}
 		for _, m := range methods {
