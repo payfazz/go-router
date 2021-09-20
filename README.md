@@ -1,6 +1,6 @@
 # go-router
 
-[![GoRef](https://pkg.go.dev/github.com/payfazz/go-router?status.svg)](https://pkg.go.dev/github.com/payfazz/go-router)
+[![GoReference](https://pkg.go.dev/badge/github.com/payfazz/go-router)](https://pkg.go.dev/github.com/payfazz/go-router)
 
 Simple golang router.
 
