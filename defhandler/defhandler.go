@@ -38,7 +38,7 @@ var (
 // Redirect return http.HandlerFunc that always redirect to url
 func Redirect(url string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// rfc2616, only "HEAD" and "GET"
+		// https://httpwg.org/specs/rfc7231.html#status.301, only "HEAD" and "GET"
 		switch r.Method {
 		case http.MethodHead, http.MethodGet:
 			http.Redirect(w, r, url, http.StatusMovedPermanently)

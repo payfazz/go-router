@@ -1,21 +1,27 @@
 # go-router
 
-[![GoDoc](https://godoc.org/github.com/payfazz/go-router?status.svg)](https://godoc.org/github.com/payfazz/go-router)
+[![GoRef](https://pkg.go.dev/github.com/payfazz/go-router?status.svg)](https://pkg.go.dev/github.com/payfazz/go-router)
 
 Simple golang router.
 
-This project is about simple http router that preserve `http.Handler` and `http.HanderFunc` signature.
+This project is about simple http router that preserve `http.Handler` and
+`http.HanderFunc` signature.
 
-Because every routing strategy (`path.H.Compile`, `method.H.Compile`, `segment.H.Compile`) will produce `http.HandlerFunc` (which is also `http.Handler`), it can be mix with another library.
+Because every routing strategy (`path.H.Compile`, `method.H.Compile`,
+`segment.H.Compile`) will produce `http.HandlerFunc` (which is also
+`http.Handler`), it can be mix with another library.
 
-It heavily use clousure and tail call, so it will be faster when tail-cail-optimization implemented on golang. The routing decission tree is precompute, so it should be faster.
+It heavily use clousure and tail call, so it will be faster when
+tail-cail-optimization implemented on golang. The routing decission tree is
+precompute, so it should be faster.
 
-see also https://github.com/payfazz/go-middleware for middleware
+see also https://pkg.go.dev/github.com/payfazz/go-middleware for middleware
 
-see https://github.com/payfazz/go-handler for alternative signature of http handling
-
+see https://pkg.go.dev/github.com/payfazz/go-handler/v2 for alternative
+signature of http handling
 
 ### Host based routing
+
 `host` package provide host based routing
 
 example:
@@ -28,7 +34,10 @@ http.ListenAndServe(":8080", host.H{
 ```
 
 ### Method based routing
-`method` pakcage provide method based routing, by itself method based routing is not useful, but because it generate `http.HandlerFunc` you can mix it with others
+
+`method` pakcage provide method based routing, by itself method based routing is
+not useful, but because it generate `http.HandlerFunc` you can mix it with
+others
 
 example:
 
@@ -43,6 +52,7 @@ http.ListenAndServe(":8080", path.H{
 ```
 
 ### Segment based routing
+
 `segment` provide segment based routing
 
 example:
@@ -58,7 +68,9 @@ http.ListenAndServe(":8080", segment.H{
 ```
 
 ### Path based routing
+
 `path` package is just tool to compose `segment` based routing.
+
 ```go
 h := path.H{
   "/a":   handler1,
@@ -66,7 +78,9 @@ h := path.H{
   "/b/d": handler3,
 }.C()
 ```
+
 will be same with
+
 ```go
 h := segment.H{
   "a": handler1,
@@ -77,7 +91,9 @@ h := segment.H{
 }.C()
 ```
 
-`path` also provide parameter in path, because internally `path` use `segment`, this parameter can be access via `segment`
+`path` also provide parameter in path, because internally `path` use `segment`,
+this parameter can be access via `segment`
+
 ```go
 http.ListenAndServe(":8080", path.H{
   "a/:b/c/:d": func(w http.ResponseWriter, r *http.Request) {
@@ -89,13 +105,18 @@ http.ListenAndServe(":8080", path.H{
 ```
 
 ## Quick Note
+
 Routing is done by prefix segment matching, so
+
 ```go
 h := path.H{
   "/a/b": handler1,
 }.C()
 ```
-will be still handling request to `/a/b/c/d/e`, if you need to only handle `/a/b` you need to use `segment.MustEnd` middleware
+
+will be still handling request to `/a/b/c/d/e`, if you need to only handle
+`/a/b` you need to use `segment.MustEnd` middleware
+
 ```go
 h := path.H{
   "/a/b": segment.MustEnd(handler1),
@@ -103,6 +124,7 @@ h := path.H{
 ```
 
 This is intentionally, useful for path grouping
+
 ```go
 func main() {
   http.ListenAndServe(":8080", root())
@@ -122,9 +144,12 @@ func api() http.HandlerFunc {
   }.C()
 }
 ```
+
 request to `/api/order` will be handled by `orderHandler`
 
-If you use https://github.com/payfazz/go-middleware, you can easily compose with another middleware, for example `method.Must`
+If you use https://pkg.go.dev/github.com/payfazz/go-middleware, you can easily
+compose with another middleware, for example `method.Must`
+
 ```go
 h := path.H{
   "/a/b": middleware.C(
@@ -137,8 +162,8 @@ h := path.H{
 
 ## TODO
 
-* More documentation and examples
-* create more testing
-* make it faster by zero-allocation, current bottleneck:
-  * net/http.(*Request).WithContext
-  * strings.Split
+- More documentation and examples
+- create more testing
+- make it faster by zero-allocation, current bottleneck:
+  - net/http.(*Request).WithContext
+  - strings.Split

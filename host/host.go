@@ -7,6 +7,8 @@ import (
 	"github.com/payfazz/go-router/defhandler"
 )
 
+// TODO(win): support wildcard host (example: *.payfazz.com)
+
 // H is type for mapping host and its handler
 type H map[string]http.HandlerFunc
 
