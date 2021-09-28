@@ -1,7 +1,3 @@
 module github.com/payfazz/go-router
 
 go 1.17
-
-require github.com/payfazz/go-middleware v1.0.1
-
-require github.com/payfazz/httpchain v1.0.3 // indirect
