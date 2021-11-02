@@ -19,7 +19,7 @@ type H map[string]http.HandlerFunc
 
 // Compile into single http.HandlerFunc
 func (h H) Compile(notfoundHandler http.HandlerFunc) http.HandlerFunc {
-	b := &builderT{make(tree)}
+	b := make(tree)
 	for k, v := range h {
 		b.add(k, v)
 	}

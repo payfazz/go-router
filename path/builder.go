@@ -8,31 +8,34 @@ import (
 	segmentpkg "github.com/payfazz/go-router/segment"
 )
 
+type pathPart interface{ pathPartTag() }
 type segment string
 type param string
 
+func (segment) pathPartTag() {}
+func (param) pathPartTag()   {}
+
+type handlerPart interface{ handlerPartTag() }
 type handler http.HandlerFunc
+type tree map[pathPart]handlerPart
 
-type tree map[interface{}]interface{} // map[(segment or param)](tree or handler)
+func (handler) handlerPartTag() {}
+func (tree) handlerPartTag()    {}
 
-type builderT struct {
-	root tree
-}
-
-func (builder *builderT) add(path string, h http.HandlerFunc) {
-	current := builder.root
+func (root tree) add(path string, h http.HandlerFunc) {
+	current := root
 	path = strings.TrimPrefix(path, "/")
 	path = strings.TrimSuffix(path, "/")
 	paths := strings.Split(path, "/")
 
 	// for intermediate segment
 	for i := 0; i < len(paths)-1; i++ {
-		segStr := paths[i]
-		var item interface{}
-		if strings.HasPrefix(segStr, ":") {
-			item = param(segStr[1:])
+		p := paths[i]
+		var item pathPart
+		if strings.HasPrefix(p, ":") {
+			item = param(p[1:])
 		} else {
-			item = segment(segStr)
+			item = segment(p)
 		}
 		next, ok := current[item]
 		if !ok {
@@ -48,18 +51,18 @@ func (builder *builderT) add(path string, h http.HandlerFunc) {
 			current[item] = newTree
 			current = newTree
 		default:
-			panic("path: DEADCODE: (BUG) invalid tree")
+			panic("path: Non-exhaustive switch")
 		}
 	}
 
 	// for last segment
 	if len(paths) > 0 {
-		segStr := paths[len(paths)-1]
-		var item interface{}
-		if strings.HasPrefix(segStr, ":") {
-			item = param(segStr[1:])
+		p := paths[len(paths)-1]
+		var item pathPart
+		if strings.HasPrefix(p, ":") {
+			item = param(p[1:])
 		} else {
-			item = segment(segStr)
+			item = segment(p)
 		}
 		next, ok := current[item]
 		if !ok {
@@ -76,17 +79,17 @@ func (builder *builderT) add(path string, h http.HandlerFunc) {
 				}
 				panic("path: duplicate handler: " + path)
 			default:
-				panic("path: DEADCODE: (BUG) invalid tree")
+				panic("path: Non-exhaustive switch")
 			}
 		}
 	}
 }
 
-func (builder *builderT) compile(def http.HandlerFunc) http.HandlerFunc {
-	return builderCompile(builder.root, def, 0)
+func (root tree) compile(def http.HandlerFunc) http.HandlerFunc {
+	return compile(root, def, 0)
 }
 
-func builderCompile(root interface{}, def http.HandlerFunc, count int) http.HandlerFunc {
+func compile(root handlerPart, def http.HandlerFunc, count int) http.HandlerFunc {
 	switch root := root.(type) {
 	case handler:
 		return http.HandlerFunc(root)
@@ -96,7 +99,7 @@ func builderCompile(root interface{}, def http.HandlerFunc, count int) http.Hand
 		var paramTag string
 
 		if item, ok := root[segment("")]; ok {
-			tmp := builderCompile(item, def, count+1)
+			tmp := compile(item, def, count+1)
 			def = func(w http.ResponseWriter, rOld *http.Request) {
 				s, r := internalsegment.TryShifterFrom(rOld)
 				cur := s.CurrentIndex()
@@ -111,19 +114,19 @@ func builderCompile(root interface{}, def http.HandlerFunc, count int) http.Hand
 		for key, item := range root {
 			switch key := key.(type) {
 			case segment:
-				hMap[string(key)] = builderCompile(item, def, count+1)
+				hMap[string(key)] = compile(item, def, count+1)
 			case param:
 				switch paramHandler {
 				case nil:
 					paramTag = string(key)
-					paramHandler = segmentpkg.Tag(paramTag, builderCompile(item, def, count+1))
+					paramHandler = segmentpkg.Tag(paramTag, compile(item, def, count+1))
 				default:
 					if paramTag != string(key) {
 						panic("path: multiple param name, :" + paramTag + " != :" + string(key))
 					}
 				}
 			default:
-				panic("path: DEADCODE: (BUG) invalid tree")
+				panic("path: Non-exhaustive switch")
 			}
 		}
 
@@ -133,6 +136,6 @@ func builderCompile(root interface{}, def http.HandlerFunc, count int) http.Hand
 
 		return hMap.Compile(paramHandler)
 	default:
-		panic("path: DEADCODE: (BUG) invalid tree")
+		panic("path: Non-exhaustive switch")
 	}
 }
