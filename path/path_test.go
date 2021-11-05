@@ -194,3 +194,29 @@ func TestStripper(t *testing.T) {
 		{"/a/b/c/d", "|0:|2:c/d|false:|false:"},
 	})
 }
+
+func TestDuplicateParamName(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatalf("duplicate parameter name should panic")
+		}
+	}()
+
+	path.H{
+		"/asdf/:gege/haha": nil,
+		"/asdf/:lele/haha": nil,
+	}.C()
+}
+
+func TestDuplicateHandler(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatalf("duplicate handler should panic")
+		}
+	}()
+
+	path.H{
+		"/asdf/": nil,
+		"/asdf":  nil,
+	}.C()
+}
