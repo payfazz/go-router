@@ -75,6 +75,11 @@ func MustEnd(h http.HandlerFunc) http.HandlerFunc {
 	return EndOr(nil)(h)
 }
 
+// Last is synonym for MustEnd
+func Last(h http.HandlerFunc) http.HandlerFunc {
+	return MustEnd(h)
+}
+
 // Stripper is middleware for stripping processed segment from r.URL.Path
 func Stripper(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
