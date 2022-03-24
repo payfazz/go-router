@@ -43,7 +43,7 @@ func Redirect(url string) http.HandlerFunc {
 		case http.MethodHead, http.MethodGet:
 			http.Redirect(w, r, url, http.StatusMovedPermanently)
 		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
+			http.Redirect(w, r, url, http.StatusPermanentRedirect)
 		}
 	}
 }

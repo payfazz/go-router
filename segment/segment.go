@@ -1,4 +1,6 @@
 // Package segment provide segment based routing
+//
+// segment based routing is considered low level, use path/segment based routing for high level routing.
 package segment
 
 import (

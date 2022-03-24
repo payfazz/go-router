@@ -7,9 +7,9 @@ Simple golang router.
 This project is about simple http router that preserve `http.Handler` and
 `http.HanderFunc` signature.
 
-Because every routing strategy (`path.H.Compile`, `method.H.Compile`,
-`segment.H.Compile`) will produce `http.HandlerFunc` (which is also
-`http.Handler`), it can be mix with another library.
+Every routing strategy (`path.H.Compile`, `method.H.Compile`,
+`segment.H.Compile`) will produce `http.HandlerFunc`,
+it can be mix with each other routing strategy.
 
 It heavily use clousure and tail call, so it will be faster when
 tail-cail-optimization implemented on golang. The routing decission tree is
