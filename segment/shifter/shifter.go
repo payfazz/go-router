@@ -94,18 +94,14 @@ func (s *Shifter) Tag(tag string) {
 	s.TagIndex(s.CurrentIndex(), tag)
 }
 
-func (s *Shifter) lazyInitTag() {
-	if s.tag == nil {
-		s.tag = make(map[string]int)
-	}
-}
-
 // TagIndex will tag i-th segment
 func (s *Shifter) TagIndex(i int, tag string) {
 	if i < 0 || i >= s.Size() {
 		return
 	}
-	s.lazyInitTag()
+	if s.tag == nil {
+		s.tag = make(map[string]int)
+	}
 	s.tag[tag] = i
 }
 
@@ -116,13 +112,11 @@ func (s *Shifter) TagRelative(d int, tag string) {
 
 // DeleteTag delete tag
 func (s *Shifter) DeleteTag(tag string) {
-	s.lazyInitTag()
 	delete(s.tag, tag)
 }
 
 // ClearTag clear all tags on index
 func (s *Shifter) ClearTag(index int) {
-	s.lazyInitTag()
 	var what []string
 	for k, v := range s.tag {
 		if v == index {
@@ -136,7 +130,6 @@ func (s *Shifter) ClearTag(index int) {
 
 // GetByTag return tagged segment
 func (s *Shifter) GetByTag(tag string) (string, bool) {
-	s.lazyInitTag()
 	i, ok := s.tag[tag]
 	if !ok {
 		return "", false
